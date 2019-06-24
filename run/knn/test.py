@@ -60,8 +60,8 @@ for bound in BOUNDS:
     pass
 
 #ZRANGE = (0.125, 0.325)
-ZRANGE = (0., 2.5)
-
+#ZRANGE = (0., 2.5)
+ZRANGE = (0., 0.8)
 
 # Main function definition
 @profile

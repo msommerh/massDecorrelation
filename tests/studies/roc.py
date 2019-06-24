@@ -22,7 +22,7 @@ import rootplotting as rp
 ROOT.gStyle.SetTitleOffset(2.0, 'y')
 
 
-@showsave
+#@showsave
 def roc (data_, args, features, masscut=False, pt_range=(200, 2000)):
     """
     Perform study of ...
@@ -38,13 +38,13 @@ def roc (data_, args, features, masscut=False, pt_range=(200, 2000)):
 
     # Select pT-range
     if pt_range is not None:
-        data = data_.loc[(data_['pt'] > pt_range[0]) & (data_['pt'] < pt_range[1])]
+        data = data_.loc[(data_['fjet_pt'] > pt_range[0]) & (data_['fjet_pt'] < pt_range[1])]
     else:
         data = data_
         pass
 
     # (Opt.) masscut | @NOTE: Duplication with adversarial/utils/metrics.py
-    msk = (data['m'] > 60.) & (data['m'] < 100.) if masscut else np.ones_like(data['signal']).astype(bool)
+    msk = (data['fjet_mass'] > 60.) & (data['fjet_mass'] < 100.) if masscut else np.ones_like(data['signal']).astype(bool)
 
     # Computing ROC curves
     ROCs = dict()
@@ -105,6 +105,8 @@ def roc (data_, args, features, masscut=False, pt_range=(200, 2000)):
 
     # Output
     path = 'figures/roc{}{:s}.pdf'.format('__pT{:.0f}_{:.0f}'.format(pt_range[0], pt_range[1]) if pt_range is not None else '', '__masscut' if masscut else '')
+
+    c.save(path = path) #this was actually missing, lol
 
     return c, args, path
 

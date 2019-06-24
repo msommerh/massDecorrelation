@@ -23,7 +23,7 @@ SHAPEVAL_RANGE = np.linspace(0, 3.0, 3 * 2 + 1, endpoint=True)[1:]
 OMEGA_RANGE = np.linspace(0., 1.0, 2 * 50 + 1, endpoint = True)[1:]
 MASS_BINS = np.linspace(50., 300., 25 + 1, endpoint=True)
 
-TAU21BINS = np.linspace(0., 2., 501, endpoint=True)
+TAU21BINS = np.linspace(0., 1., 501, endpoint=True)
 D2BINS = np.linspace(0., 5., 500 + 1, endpoint=True)
 N2BINS = np.linspace(0, 0.6, 500 + 1, endpoint=True)
 
@@ -69,7 +69,8 @@ def get_css_series (jssVar, data):
         Pandas.Series containing transformed variable.
     """
 
-    massData = data['m'].as_matrix().flatten()
+    #massData = data['m'].as_matrix().flatten()
+    massData = data['fjet_mass'].as_matrix().flatten()
     jssData = data[jssVar].as_matrix().flatten()
     massbins = np.digitize(massData, MASS_BINS)-1
 
@@ -82,6 +83,9 @@ def get_css_series (jssVar, data):
             massBin = len(MASS_BINS)
             pass
 
+	if massBin >= len(Ginv_massbins) or massBin >= len(F_massbins): 	## didnt work :(
+		print "len(Ginv_massbins) =", len(Ginv_massbins), ";  len(F_massbins) =", len(F_massbins), ";  massBin =", massBin
+	#	continue
         newJSSVal = apply_css(jssVal, Ginv_massbins[massBin], F_massbins[massBin])
         newJSSVars.append(newJSSVal)
         pass

@@ -17,14 +17,14 @@ import rootplotting as rp
 
 
 
-@showsave
+#@showsave
 def robustness_full (data, args, features, masscut=False, num_bootstrap=5):
 
     # Compute relevant quantities
     bins, effs, rejs, jsds, meanx, jsd_limits = dict(), dict(), dict(), dict(), dict(), dict()
 
     # -- pt
-    var = 'pt'
+    var = 'fjet_pt'
     bins[var] = [200, 260, 330, 430, 560, 720, 930, 1200, 1550, 2000]
     effs[var], rejs[var], jsds[var], meanx[var], jsd_limits[var] = compute(data, args, features, var, bins[var], masscut, num_bootstrap)
 
@@ -40,12 +40,13 @@ def robustness_full (data, args, features, masscut=False, num_bootstrap=5):
     # Output
     path = 'figures/robustness{}.pdf'.format('_masscut' if masscut else '')
 
+    c.save(path = path)
     return c, args, path
 
     pass
 
 
-@showsave
+#@showsave
 def robustness (data, args, features, var, bins, masscut=False, num_bootstrap=5):
     """
     Perform study of robustness wrt. `var`.
@@ -71,6 +72,7 @@ def robustness (data, args, features, var, bins, masscut=False, num_bootstrap=5)
     # Output
     path = 'figures/robustness_{}{}.pdf'.format(var, '_masscut' if masscut else '')
 
+    c.save(path = path)
     return c, args, path
 
 
@@ -181,13 +183,13 @@ def plot_full (*argv):
         # Plots
         # -- References
         boxopts  = dict(fillcolor=ROOT.kBlack, alpha=0.05, linecolor=ROOT.kGray + 2, linewidth=1, option='HIST')
-        c.pads()[0].hist([2], bins=[bins['pt'] [0], bins['pt'] [-1]], **boxopts)
+        c.pads()[0].hist([2], bins=[bins['fjet_pt'] [0], bins['fjet_pt'] [-1]], **boxopts)
         c.pads()[1].hist([2], bins=[bins['npv'][0], bins['npv'][-1]], **boxopts)
-        c.pads()[2].hist([1], bins=[bins['pt'] [0], bins['pt'] [-1]], **boxopts)
+        c.pads()[2].hist([1], bins=[bins['fjet_pt'] [0], bins['fjet_pt'] [-1]], **boxopts)
         c.pads()[3].hist([1], bins=[bins['npv'][0], bins['npv'][-1]], **boxopts)
 
         nb_col = 2
-        for col, var in enumerate(['pt', 'npv']):
+        for col, var in enumerate(['fjet_pt', 'npv']):
             for is_simple in [True, False]:
                 for ifeat, feat in filter(lambda t: is_simple == signal_low(t[1]), enumerate(features)):
 
@@ -268,7 +270,7 @@ def plot_full (*argv):
             c.pads()[3]._yaxis().SetTitleOffset(9999.)
 
             # -- x-axis label
-            if   var == 'pt':
+            if   var == 'fjet_pt':
                 xlabel = "Large-#it{R} jet p_{T} [GeV]"
             elif var == 'npv':
                 xlabel = "Number of reconstructed vertices N_{PV}"
@@ -343,7 +345,7 @@ def plot_individual (*argv):
     bins['npv'][-1] = np.floor(bins['npv'][-1])
 
     # Loop combinations
-    for var, metric in itertools.product(['pt', 'npv', None], ['rej', 'jsd']):
+    for var, metric in itertools.product(['fjet_pt', 'npv', None], ['rej', 'jsd']):
 
         with TemporaryStyle() as style:
 
@@ -444,11 +446,11 @@ def plot_individual (*argv):
                     c.graph(gr_stat, linestyle=2, linecolor=ROOT.kGray + 1, fillcolor=ROOT.kBlack, alpha=0.03, option='L3')
 
                     x_, y_, ex_, ey_ = ROOT.Double(0), ROOT.Double(0), ROOT.Double(0), ROOT.Double(0)
-                    idx = (gr_comb.GetN() - 1) if var == 'pt' else (gr_comb.GetN() // 2)
+                    idx = (gr_comb.GetN() - 1) if var == 'fjet_pt' else (gr_comb.GetN() // 2)
                     gr_comb.GetPoint(idx, x_,  y_)
                     ey_ = gr_comb.GetErrorY(idx)
                     x_, y_ = map(float, (x_, y_))
-                    if var == 'pt':
+                    if var == 'fjet_pt':
                         c.latex("Mean stat. #oplus #varepsilon_{bkg}^{rel} var. limit     ", x_, y_ - 1.0 * ey_, align=31, textsize=11 * scale, angle=0, textcolor=ROOT.kGray + 2)
                         pass
                     pass
@@ -458,7 +460,7 @@ def plot_individual (*argv):
                 #c.pads()[2]._xaxis().SetTitleOffset(2.3)
 
                 # -- x-axis label
-                if   var == 'pt':
+                if   var == 'fjet_pt':
                     xlabel = "Large-#it{R} jet p_{T} [GeV]"
                 elif var == 'npv':
                     xlabel = "Number of reconstructed vertices N_{PV}"
@@ -496,7 +498,7 @@ def plot_individual (*argv):
                 c.text( ["#sqrt{s} = 13 TeV,  #it{W} jet tagging"] + \
                        (['m #in  [60, 100] GeV'] if masscut else []) + \
                        (['Multijets'] if metric == 'jsd' else []),
-                       ATLAS=False, ymax=0.40 if (masscut and (var == 'pt') and (metric == 'rej')) else None)
+                       ATLAS=False, ymax=0.40 if (masscut and (var == 'fjet_pt') and (metric == 'rej')) else None)
                        #, ymax=1. - margin_vert - 0.10)
 
             else:
@@ -674,7 +676,7 @@ def plot (*argv):
             pass
 
         # -- x-axis label
-        if var == 'pt':
+        if var == 'fjet_pt':
             xlabel = "Large-#it{R} jet p_{T} [GeV]"
         elif var == 'npv':
             xlabel = "Number of reconstructed vertices N_{PV}"

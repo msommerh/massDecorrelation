@@ -42,24 +42,29 @@ parser.add_argument('--seed', type=int, default=21,
                     help="Random-number generator seed, for reproducibility.")
 parser.add_argument('--nleading', type=int, default=2,
                     help="Take only up to `nleading` jets in each event, given sorting.")
-
+parser.add_argument('--weight', type=float, default=1.,
+                    help="Background weight. Currently only single weight possible.")
 
 # Utility function(s)
 glob_sort_list = lambda paths: sorted(list(itertools.chain.from_iterable(map(glob, paths))))
 
+branches_l1 = ['jj_l1_softDrop_mass', 'jj_l1_softDrop_pt', 'jj_l1_softDrop_eta', 'jj_l1_softDrop_phi', 'jj_l1_tau1', 'jj_l1_tau2', 'jj_l1_tau2/jj_l1_tau1', 'jj_l1_ecfN2_beta1', 'jj_l1_ecfN2_beta2','jj_l1_DeepBoosted_WvsQCD', 'jj_l1_DeepBoosted_probWqq']
+branches_l2 = ['jj_l2_softDrop_mass', 'jj_l2_softDrop_pt', 'jj_l2_softDrop_eta', 'jj_l2_softDrop_phi', 'jj_l2_tau1', 'jj_l2_tau2', 'jj_l2_tau2/jj_l2_tau1', 'jj_l2_ecfN2_beta1', 'jj_l2_ecfN2_beta2','jj_l2_DeepBoosted_WvsQCD', 'jj_l2_DeepBoosted_probWqq']
+branches_updated = ['fjet_mass', 'fjet_pt', 'fjet_eta', 'fjet_phi', 'fjet_tau1', 'fjet_tau2', 'fjet_tau21', 'fjet_N2_beta1', 'fjet_N2_beta2','fjet_DeepBoosted_WvsQCD', 'fjet_DeepBoosted_probWqq']
 
 def unravel (data, nleading):
     """
     ...
     """
-    
+
+    print "unravel has been entered"    
     if not data.dtype.hasobject:
         return data
 
     if nleading == 0:
         nleading = 99999
         pass
-
+    print "unravel point A"
     # Identify variable-length (i.e. per-jet) and scalar (i.e. per-event)
     # fields
     jet_fields = list()
@@ -70,7 +75,7 @@ def unravel (data, nleading):
         pass
     jet_fields   = sorted(jet_fields)
     event_fields = sorted([field for field in data.dtype.names if field not in jet_fields])
-
+    print "unravel point B"
     # Loop events, take up to `nleading` jets from each
     jets = list()
     data_events = data[event_fields]
@@ -84,7 +89,7 @@ def unravel (data, nleading):
             rows.append(row)
             pass
         pass
-        
+    print "unravel point C"
     return np.concatenate(rows)
 
 
@@ -125,8 +130,23 @@ def main ():
     print "Found {} signal and {} background files.".format(len(sig), len(bkg))
 
     # Read in data
-    data_sig = root_numpy.root2array(sig, treename=args.treename)
-    data_bkg = root_numpy.root2array(bkg, treename=args.treename)
+    data_sig_l1 = root_numpy.root2array(sig, treename=args.treename, branches=branches_l1)
+    data_sig_l1.dtype.names = branches_updated
+    data_sig_l2 = root_numpy.root2array(sig, treename=args.treename, branches=branches_l2)
+    data_sig_l2.dtype.names = branches_updated
+    data_bkg_l1 = root_numpy.root2array(bkg, treename=args.treename, branches=branches_l1)
+    data_bkg_l1.dtype.names = branches_updated
+    data_bkg_l2 = root_numpy.root2array(bkg, treename=args.treename, branches=branches_l2)
+    data_bkg_l2.dtype.names = branches_updated
+    #data_sig = root_numpy.root2array(sig, treename=args.treename)
+    #data_bkg = root_numpy.root2array(bkg, treename=args.treename)
+    print "data_sig_l1.shape =", data_sig_l1.shape
+    print "data_sig_l2.shape =", data_sig_l2.shape
+    print "data_sig_l1[:20] =", data_sig_l1[:20]
+    data_sig = np.concatenate((data_sig_l1, data_sig_l2))
+    data_bkg = np.concatenate((data_bkg_l1, data_bkg_l2))
+    data_sig.dtype.names = branches_updated
+    data_bkg.dtype.names = branches_updated
 
     # (Opt.) Unravel non-flat data
     data_sig = unravel(data_sig, args.nleading)
@@ -143,10 +163,12 @@ def main ():
     data.dtype.names = map(rename, data.dtype.names)
 
     # Variable names
-    var_m      = 'fjet_JetConstitScaleMomentum_m'
+    var_m      = 'fjet_mass'
+    #var_m      = 'fjet_JetConstitScaleMomentum_m'
     var_pt     = 'fjet_pt'
     var_rho    = 'fjet_rho'    # New variable
     var_rhoDDT = 'fjet_rhoDDT' # New variable
+    var_weight = 'mcEventWeight' # New variable
 
     # Object selection
     msk = (data[var_pt] > 10.) & (data[var_m] > 10.) # @TODO: Generalise?
@@ -155,6 +177,7 @@ def main ():
     # Append rhoDDT field
     data = rfn.append_fields(data, var_rho,    np.log(data[var_m]**2 / data[var_pt]**2),   usemask=False)
     data = rfn.append_fields(data, var_rhoDDT, np.log(data[var_m]**2 / data[var_pt] / 1.), usemask=False)
+    data = rfn.append_fields(data, var_weight, np.full(data.shape[0],args.weight),   usemask=False)
 
     # Append train field
     data = rfn.append_fields(data, "train", rng.rand(data.shape[0]) < args.frac_train, usemask=False)

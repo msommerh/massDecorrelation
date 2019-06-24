@@ -15,14 +15,21 @@ from adversarial.utils import wpercentile, loadclf, garbage_collect
 from adversarial.profile import profile
 
 # Common definition(s)
-VAR  = 'D2'   # 'NN' | Substructure variable to decorrelate
-EFF  = 16     # '95' | Fixed backround efficiency at which to perform decorrelation
-VARX = 'rho'  # X-axis variable from which to decorrelate
-VARY = 'pt'   # Y-axis variable from which to decorrelate
+#VAR  = 'D2'   # 'NN' | Substructure variable to decorrelate
+#VAR  = 'fjet_N2_beta1'
+#VAR  = 'fjet_N2_beta2'
+VAR  = 'fjet_tau21'
+#VAR  = 'fjet_tau21_r'
+#EFF  = 16     # '95' | Fixed backround efficiency at which to perform decorrelation
+EFF  = 15
+#VARX = 'rho'  # X-axis variable from which to decorrelate
+#VARY = 'pt'   # Y-axis variable from which to decorrelate
+VARX = 'fjet_rho'
+VARY = 'fjet_pt'
 VARS = [VARX, VARY]
 AXIS = {      # Dict holding (num_bins, axis_min, axis_max) for axis variables
-    'rho': (20, -7.0, -1.0),
-    'pt':  (20, 200., 2000.),
+    'fjet_rho': (20, -7.0, -1.0),
+    'fjet_pt':  (20, 200., 2000.),
 }
 
 #### ________________________________________________________________________

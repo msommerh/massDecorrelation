@@ -14,7 +14,7 @@ from adversarial.constants import *
 import rootplotting as rp
 
 
-@showsave
+#@showsave
 def jetmasscomparison (data, args, features, eff_sig=50):
     """
     Perform study of jet mass distributions before and after subtructure cut for
@@ -104,7 +104,7 @@ def plot (*argv):
             histstyle[signal].update(base)
             for ipad, pad in enumerate(c.pads()[1:], 1):
                 histstyle[signal]['option'] = 'HIST'
-                pad.hist(data.loc[msk, 'm'].values, weights=data.loc[msk, 'weight_test'].values, **histstyle[signal])
+                pad.hist(data.loc[msk, 'fjet_mass'].values, weights=data.loc[msk, 'weight_test'].values, **histstyle[signal])
                 pass
             pass
 
@@ -131,7 +131,7 @@ def plot (*argv):
             cfg.update(opts)
             msk = (data['signal'] == 0) & msks_pass[feat]
             pad = c.pads()[1 + ifeat//2]
-            pad.hist(data.loc[msk, 'm'].values, weights=data.loc[msk, 'weight_test'].values, label=" " + latex(feat, ROOT=True), **cfg)
+            pad.hist(data.loc[msk, 'fjet_mass'].values, weights=data.loc[msk, 'weight_test'].values, label=" " + latex(feat, ROOT=True), **cfg)
             pass
 
         # -- Legend(s)
@@ -140,8 +140,8 @@ def plot (*argv):
             offsety =  0.20 * ((2 - (ipad // 2)) / float(2.))
             pad.legend(width=0.25, xmin=0.68 - offsetx, ymax=0.80 - offsety)
             pad.latex("Tagged multijets:", NDC=True, x=0.93 - offsetx, y=0.84 - offsety, textcolor=ROOT.kGray + 3, textsize=style.GetLegendTextSize() * 0.8, align=31)
-            pad._legends[-1].SetMargin(0.35)
-            pad._legends[-1].SetTextSize(style.GetLegendTextSize())
+            #pad._legends[-1].SetMargin(0.35)   			##probably need to replace these to make the legend look better....
+            #pad._legends[-1].SetTextSize(style.GetLegendTextSize())
             pass
 
         # Formatting pads
@@ -275,7 +275,7 @@ def plot_individual (*argv):
                     msk = data['signal'] == signal
                     histstyle[signal].update(base)
                     histstyle[signal]['option'] = 'HIST'
-                    c.hist(data.loc[msk, 'm'].values, weights=data.loc[msk, 'weight_test'].values, **histstyle[signal])
+                    c.hist(data.loc[msk, 'fjet_mass'].values, weights=data.loc[msk, 'weight_test'].values, **histstyle[signal])
                     pass
 
                 for sig in [True, False]:
@@ -292,7 +292,7 @@ def plot_individual (*argv):
                     cfg = dict(**base)
                     cfg.update(opts)
                     msk = (data['signal'] == 0) & msks_pass[feat]
-                    c.hist(data.loc[msk, 'm'].values, weights=data.loc[msk, 'weight_test'].values, label=" " + latex(feat, ROOT=True), **cfg)
+                    c.hist(data.loc[msk, 'fjet_mass'].values, weights=data.loc[msk, 'weight_test'].values, label=" " + latex(feat, ROOT=True), **cfg)
                     pass
 
                 # -- Legend(s)

@@ -19,7 +19,7 @@ HISTSTYLE[False]['label'] = "Multijets"
 
 
 @garbage_collect
-@showsave
+#@showsave
 def distribution (data_, args, feat, pt_range, mass_range):
     """
     Perform study of substructure variable distributions.
@@ -34,13 +34,13 @@ def distribution (data_, args, feat, pt_range, mass_range):
 
     # Select data
     if pt_range is not None:
-        data = data_[(data_['pt'] > pt_range[0]) & (data_['pt'] < pt_range[1])]
+        data = data_[(data_['fjet_pt'] > pt_range[0]) & (data_['fjet_pt'] < pt_range[1])]
     else:
         data = data_
         pass
 
     if mass_range is not None:
-        data = data[(data['m'] > mass_range[0]) & (data['m'] < mass_range[1])]
+        data = data[(data['fjet_mass'] > mass_range[0]) & (data['fjet_mass'] < mass_range[1])]
         pass
 
     # Define bins
@@ -53,7 +53,7 @@ def distribution (data_, args, feat, pt_range, mass_range):
     elif feat.lower().startswith('d2'):
         print "distribution: D2  feature '{}'".format(feat)
         xmin, xmax =  0.,  3.
-    elif 'tau21' in feat.lower():
+    elif 'fjet_tau21' in feat.lower():
         xmin, xmax =  0.,  1.
         pass
 
@@ -67,7 +67,10 @@ def distribution (data_, args, feat, pt_range, mass_range):
     c = plot(args, data, feat, bins, pt_range, mass_range)
 
     # Output
+    mkdir('figures/distribution/')
     path = 'figures/distribution/distribution_{}{}{}.pdf'.format(standardise(feat), '__pT{:.0f}_{:.0f}'.format(pt_range[0], pt_range[1]) if pt_range is not None else '', '__mass{:.0f}_{:.0f}'.format(mass_range[0], mass_range[1]) if mass_range is not None else '')
+
+    c.save(path = path) #this was actually missing, lol
 
     return c, args, path
 

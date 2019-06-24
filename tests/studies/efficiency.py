@@ -14,7 +14,7 @@ from adversarial.constants import *
 import rootplotting as rp
 
 
-@showsave
+#@showsave
 def efficiency (data, args, feat):
     """
     Perform study of background efficiency vs. mass for different inclusive
@@ -53,7 +53,7 @@ def efficiency (data, args, feat):
         profile = ROOT.TProfile('profile_{}_{}'.format(feat, cut), "",
                                 len(MASSBINS) - 1, MASSBINS)
 
-        M = np.vstack((data.loc[msk, 'm'].values, msk_pass[msk])).T
+        M = np.vstack((data.loc[msk, 'fjet_mass'].values, msk_pass[msk])).T
         weights = data.loc[msk, 'weight_test'].values
 
         root_numpy.fill_profile(profile, M, weights=weights)
@@ -68,6 +68,7 @@ def efficiency (data, args, feat):
     # Output
     path = 'figures/efficiency_{}.pdf'.format(standardise(feat))
 
+    c.save(path = path)
     return c, args, path
 
 

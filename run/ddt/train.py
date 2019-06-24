@@ -53,7 +53,7 @@ def main (args):
 
     # Save DDT transform
     saveclf(ddt, 'models/ddt/ddt.pkl.gz')
-
+    print "got to the end of main()"
     return 0
 
 

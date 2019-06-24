@@ -196,33 +196,34 @@ def showsave (f):
     Method decorrator for all study method, to (optionally) show and save the
     canvas to file.
     """
-    def wrapper (*args, **kwargs):
-        # Run study
-        c, args, path = f(*args, **kwargs)
+    #def wrapper (*args, **kwargs):
+    #    # Run study
+    #    c, args, path = f(*args, **kwargs)
 
-        # Save
-        if args.save:
-            dir = '/'.join(path.split('/')[:-1])
-            mkdir(dir)
-            suffix = path.split('.')[-1]
-            if len(suffix) < 4:
-                base = '.'.join(path.split('.')[:-1])
-                c.save(base + '.eps')
-                c.save(base + '.pdf')
-                c.save(base + '.C')
-            else:
-                c.save(path)
-                pass
+    #    # Save
+    #    if args.save:
+    #        dir = '/'.join(path.split('/')[:-1])
+    #        mkdir(dir)
+    #        suffix = path.split('.')[-1]
+    #        if len(suffix) < 4:
+    #            base = '.'.join(path.split('.')[:-1])
+    #            c.save(base + '.eps')
+    #            c.save(base + '.pdf')
+    #            c.save(base + '.C')
+    #        else:
+    #            c.save(path)
+    #            pass
 
-            pass
+    #        pass
 
-        # Show
-        if args.show:
-            c.show()
-            pass
-        return
+    #    # Show
+    #    if args.show:
+    #        c.show()
+    #        pass
+    #    return
 
-    return wrapper
+    #return wrapper
+    return
 
 
 def standardise (name):

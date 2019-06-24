@@ -72,7 +72,7 @@ def main (args):
 
     # Save KNN classifier
     saveclf(knn, 'models/knn/knn_{:s}_{:.0f}.pkl.gz'.format(VAR, EFF))
-
+    print "reached end of main()"
     return 0
 
 

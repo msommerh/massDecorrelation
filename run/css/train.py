@@ -42,7 +42,9 @@ def main (args):
     data, features, _ = load_data(args.input + 'data.h5', background=True, train=True)
 
     # Fill substructure profile
-    perform_optimisation("D2", D2BINS, data)
+    #perform_optimisation("D2", D2BINS, data)
+    #perform_optimisation("fjet_N2_beta1", N2BINS, data)
+    perform_optimisation("fjet_tau21", TAU21BINS, data)
     return
 
 
@@ -53,7 +55,8 @@ def perform_optimisation (var, bins, data):
     """
 
     # Fill 2D substructure profile
-    profile2d = fill_2d_profile(data, var, bins, "m", MASS_BINS)
+    #profile2d = fill_2d_profile(data, var, bins, "m", MASS_BINS)
+    profile2d = fill_2d_profile(data, var, bins, "fjet_mass", MASS_BINS)
 
     # Get 1D profile for lowest mass bin
     profile0 = profile2d.ProjectionY("%s_lowMass"%profile2d.GetName(), 1, 1)
@@ -94,6 +97,7 @@ def perform_optimisation (var, bins, data):
 
         # Ensure model directory exists
         mkdir('models/css/')
+	mkdir('figures/css/')  ## put in by me because errors were eturned when saving the pdfs
 
         # Get the optimal, measured `omega`s for each mass-bin
         bestOmegas = list()

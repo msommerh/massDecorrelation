@@ -37,7 +37,8 @@ def main (args):
     data, features, _ = load_data(args.input + 'data.h5', train=True, background=True)
 
     # Add CSS variable
-    var = "D2"
+    #var = "D2"
+    var = "fjet_tau21"
     add_css(var, data)
 
     # Plot D2(CSS) distributions for each mass bin
@@ -52,14 +53,16 @@ def plot_distributions (data, var):
     """
 
     h_D2lowmass = None
-    bins = D2BINS
+    #bins = D2BINS
+    bins = TAU21BINS
     for mass, (mass_down, mass_up) in enumerate(zip(MASS_BINS[:-1], MASS_BINS[1:])):
 
         # Canvas
         c = rp.canvas(batch=True)
 
         # Fill histograms
-        msk = (data['m'] >= mass_down) & (data['m'] < mass_up)
+        #msk = (data['m'] >= mass_down) & (data['m'] < mass_up)
+	msk = (data['fjet_mass'] >= mass_down) & (data['fjet_mass'] < mass_up)
         h_D2    = c.hist(data.loc[msk, var].values,         bins=bins, weights=data.loc[msk, 'weight_test'].values, display=False)
         h_D2CSS = c.hist(data.loc[msk, var + "CSS"].values, bins=bins, weights=data.loc[msk, 'weight_test'].values, display=False)
 

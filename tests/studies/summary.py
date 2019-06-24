@@ -16,7 +16,7 @@ from adversarial.constants import *
 import rootplotting as rp
 
 
-@showsave
+#@showsave
 def summary (data_, args, features, scan_features, target_tpr=0.5, num_bootstrap=5, masscut=False, pt_range=(200, 2000)):
     """
     Perform study of combined classification- and decorrelation performance.
@@ -47,7 +47,7 @@ def summary (data_, args, features, scan_features, target_tpr=0.5, num_bootstrap
 
     # Select pT-range
     if pt_range is not None:
-        data = data_.loc[(data_['pt'] > pt_range[0]) & (data_['pt'] < pt_range[1])]
+        data = data_.loc[(data_['fjet_pt'] > pt_range[0]) & (data_['fjet_pt'] < pt_range[1])]
     else:
         data = data_
         pass
@@ -88,6 +88,7 @@ def summary (data_, args, features, scan_features, target_tpr=0.5, num_bootstrap
     # Output
     path = 'figures/summary{}{}.pdf'.format('__pT{:.0f}_{:.0f}'.format(pt_range[0], pt_range[1]) if pt_range is not None else '', '__masscut' if masscut else '')
 
+    c.save(path = path)
     return c, args, path
 
 
