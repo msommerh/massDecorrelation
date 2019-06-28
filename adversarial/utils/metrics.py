@@ -14,7 +14,8 @@ MASSBINS = np.linspace(50, 300, (300 - 50) // 5 + 1, endpoint=True)
 
 def signal_low (feat):
     """Method to determine whether the signal distribution is towards higher values."""
-    return ('Tau21' in feat or 'D2' in feat or 'N2' in feat)
+    #return ('Tau21' in feat or 'D2' in feat or 'N2' in feat)
+    return ('fjet_tau21' in feat or 'D2' in feat or 'N2' in feat)
 
 
 def JSD (P, Q, base=2):
@@ -63,7 +64,7 @@ def metrics (data, feat, target_tpr=0.5, cut=None, masscut=False, verbose=False)
     if masscut:
         print "metrics: Applying mass cut."
         pass
-    msk = (data['m'] > 60.) & (data['m'] < 100.) if masscut else np.ones_like(data['signal']).astype(bool)
+    msk = (data['fjet_mass'] > 60.) & (data['fjet_mass'] < 100.) if masscut else np.ones_like(data['signal']).astype(bool)
 
     # scikit-learn assumes signal towards 1, background towards 0
     pred = data[feat].values.copy()
@@ -108,8 +109,8 @@ def metrics (data, feat, target_tpr=0.5, cut=None, masscut=False, verbose=False)
     msk_pass = pred > cut
     msk_bkg  = data['signal'] == 0
 
-    p, _ = np.histogram(data.loc[ msk_pass & msk_bkg, 'm'].values, bins=MASSBINS, weights=data.loc[ msk_pass & msk_bkg, 'weight_test'].values, density=1.)
-    f, _ = np.histogram(data.loc[~msk_pass & msk_bkg, 'm'].values, bins=MASSBINS, weights=data.loc[~msk_pass & msk_bkg, 'weight_test'].values, density=1.)
+    p, _ = np.histogram(data.loc[ msk_pass & msk_bkg, 'fjet_mass'].values, bins=MASSBINS, weights=data.loc[ msk_pass & msk_bkg, 'weight_test'].values, density=1.)
+    f, _ = np.histogram(data.loc[~msk_pass & msk_bkg, 'fjet_mass'].values, bins=MASSBINS, weights=data.loc[~msk_pass & msk_bkg, 'weight_test'].values, density=1.)
 
     jsd = JSD(p, f)
 

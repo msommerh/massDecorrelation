@@ -71,7 +71,8 @@ def main (args):
     args, cfg = initialise(args)
 
     # Load data
-    data, _, _ = load_data(args.input + 'data.h5', train=True)
+    #data, _, _ = load_data(args.input + 'data.h5', train=True)
+    data, _, _ = load_data(args.input + 'data.h5', train_full_signal=True)
     msk_sig = data['signal'] == 1
     msk_bkg = ~msk_sig
 
@@ -113,7 +114,7 @@ def main (args):
             # Short-hands
             vbins, vmin, vmax = AXIS[var]
 
-            # Re-binned bin edges  @TODO: Make standardised right away?
+            # Re-binned bin edges 
             edges[ax] = np.interp(np.linspace(0,    vbins, vbins * rebin + 1, endpoint=True),
                                   range(vbins + 1),
                                   np.linspace(vmin, vmax,  vbins + 1,         endpoint=True))

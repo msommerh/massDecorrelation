@@ -30,7 +30,8 @@ def main (args):
     args, cfg = initialise(args)
 
     # Load data
-    data, _, _ = load_data(args.input + 'data.h5', train=True)
+    #data, _, _ = load_data(args.input + 'data.h5', train=True)
+    data, _, _ = load_data(args.input + 'data.h5', train_full_signal=True)
 
     # -------------------------------------------------------------------------
     ####

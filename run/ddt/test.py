@@ -33,7 +33,8 @@ def main (args):
     args, cfg = initialise(args)
 
     # Load data
-    data, _, _ = load_data(args.input + 'data.h5', test=True)
+    #data, _, _ = load_data(args.input + 'data.h5', test=True)
+    data, _, _ = load_data(args.input + 'data.h5', test_full_signal=True)
 
     # Add Tau21DDT variable
     add_ddt(data, VAR_TAU21)

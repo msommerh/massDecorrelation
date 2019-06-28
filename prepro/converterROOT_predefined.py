@@ -15,6 +15,7 @@ import root_numpy
 
 # Project import(s)
 from adversarial.profile import profile
+from .Reweighting import reweight
 
 # Command-line argument parser
 parser = argparse.ArgumentParser(description="Convert generally non-flat ROOT file(s) to single HDF5 file")
@@ -30,17 +31,21 @@ parser.add_argument('--sample', type=float, default=0,
                     help="Fraction of combined data to subsample.")
 parser.add_argument('--replace', action='store_true',
                     help="Whether to subsample with replacement.")
-parser.add_argument('--frac-train', type=float, default=0.8,
+parser.add_argument('--frac-train', type=float, default=0.2, #changed from 0.8 to 0.5
                     help="Fraction of comined data to use for training.")
 parser.add_argument('--seed', type=int, default=21,
                     help="Random-number generator seed, for reproducibility.")
 
 #other global variables:
-sig = ['/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_2000.root']
+#sig = ['/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_2000.root']
+
+sig = ['/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_1000.root', '/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_3000.root','/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_1200.root', '/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_3500.root','/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_1400.root', '/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_4000.root','/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_1600.root', '/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_4500.root','/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_1800.root', '/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_500.root','/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_2000.root', '/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_600.root','/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_2500.root', '/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_800.root']
+
 bkg = [] #will be filled below
 collection = 'fjet'
 treename = 'AnalysisTree'
-sig_weights = [1.] #might need to adjust
+#sig_weights = [1.] #might need to adjust
+#sig_weights = np.ones(len(sig))
 bkg_weights = [] #will be filled below
 nleading = 1
 
@@ -141,12 +146,20 @@ def main ():
     #weight_var = 'mcEventWeight'
 
     for n in range(len(sig)):
+	print "sig data loop, n =",n
 	data_sig_l1 = root_numpy.root2array(sig[n], treename=treename, branches=branches_l1, selection=selections_l1)
 	data_sig_l2 = root_numpy.root2array(sig[n], treename=treename, branches=branches_l2, selection=selections_l2)
 	data_sig_l1.dtype.names = branches_updated
 	data_sig_l2.dtype.names = branches_updated
-	data_sig_l1 = rfn.append_fields(data_sig_l1, weight_var, np.full(data_sig_l1.shape[0], sig_weights[n]),   usemask=False)
-	data_sig_l2 = rfn.append_fields(data_sig_l2, weight_var, np.full(data_sig_l2.shape[0], sig_weights[n]),   usemask=False)
+	#data_sig_l1 = rfn.append_fields(data_sig_l1, weight_var, np.full(data_sig_l1.shape[0], sig_weights[n]),   usemask=False) # uniform weights
+	#data_sig_l2 = rfn.append_fields(data_sig_l2, weight_var, np.full(data_sig_l2.shape[0], sig_weights[n]),   usemask=False)
+
+	sig_weights_l1 = reweight('prepro/weights/rescale.json', data_sig_l1['fjet_pt'], np.ones(len(data_sig_l1)), 25, scale_correction=1-args.frac_train)
+	sig_weights_l2 = reweight('prepro/weights/rescale.json', data_sig_l2['fjet_pt'], np.ones(len(data_sig_l2)), 25, scale_correction=1-args.frac_train)
+
+	data_sig_l1 = rfn.append_fields(data_sig_l1, weight_var, sig_weights_l1, usemask=False) #weights to look like signal
+        data_sig_l2 = rfn.append_fields(data_sig_l2, weight_var, sig_weights_l2, usemask=False)
+	
 	if n == 0:
 	    data_sig = np.concatenate((data_sig_l1, data_sig_l2))
 	else:
@@ -222,10 +235,15 @@ def main ():
         data = rng.choice(data, args.sample, replace=args.replace)
         pass
 
+    print "There are {} background jets and {} signal jets.".format(len(data_bkg), len(data_sig))
+    print "There are in total {} jets.".format(len(data))
+
     # Save to HDF5 file
     with h5py.File(args.output, 'w') as hf:
         hf.create_dataset(args.dataset,  data=data, compression='gzip')
         pass
+
+    print "Background training jets: {}, test jets: {}".format(sum((data['train']==1)&(data['sig']==0)), sum((data['train']==0)&(data['sig']==0)))
 
     return 
 

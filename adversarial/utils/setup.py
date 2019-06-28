@@ -349,7 +349,8 @@ def get_decorrelation_variables (data):
 
 @garbage_collect
 @profile
-def load_data (path, name='dataset', train=None, test=None, signal=None, background=None, sample=None, seed=21, replace=True):
+def load_data (path, name='dataset', train=None, test=None, signal=None, background=None, sample=None, seed=21, replace=True, test_full_signal=False, train_full_signal=False):
+#def load_data (path, name='dataset', train=None, test=None, signal=None, background=None, sample=None, seed=21, replace=True):
     """
     General script to load data, common to all run scripts.
 
@@ -370,6 +371,8 @@ def load_data (path, name='dataset', train=None, test=None, signal=None, backgro
             dataset.
     """
 
+    print "start loading data..."
+	
     # Check(s)
     assert False not in [train, test, signal, background]
     if sample: assert 0 < sample and sample < 1.
@@ -379,19 +382,21 @@ def load_data (path, name='dataset', train=None, test=None, signal=None, backgro
 
     # Subsample signal by x10 for testing: 1E+07 -> 1E+06
     np.random.seed(7)
-    try:
-        msk_test  = data['train'] == 0
-        msk_train = ~msk_test
-        msk_bkg = data['signal'] == 0
-        msk_sig = ~msk_bkg
-        idx_sig = np.where(msk_sig)[0]
-        idx_sig = np.random.choice(idx_sig, int(msk_sig.sum() * 0.1), replace=False)
-        msk_sig = np.zeros_like(msk_bkg).astype(bool)
-        msk_sig[idx_sig] = True
-        data = data[msk_train | (msk_test & (msk_sig | msk_bkg))]
-    except:
-        log.warning("Some of the keys ['train', 'signal'] were not present in file {}".format(path))
-        pass
+    #try:
+    #    msk_test  = data['train'] == 0
+    #    msk_train = ~msk_test
+    #    msk_bkg = data['signal'] == 0
+    #    msk_sig = ~msk_bkg
+    #    idx_sig = np.where(msk_sig)[0]
+    #    idx_sig = np.random.choice(idx_sig, int(msk_sig.sum() * 0.1), replace=False)
+    #    msk_sig = np.zeros_like(msk_bkg).astype(bool)
+    #    msk_sig[idx_sig] = True
+    #    data = data[msk_train | (msk_test & (msk_sig | msk_bkg))]
+    #except:
+    #    log.warning("Some of the keys ['train', 'signal'] were not present in file {}".format(path))
+    #    pass
+
+    print "logging..."
 
     # Logging
     try:
@@ -409,6 +414,8 @@ def load_data (path, name='dataset', train=None, test=None, signal=None, backgro
     # Define feature collections to use
     features_input         = INPUT_VARIABLES
     features_decorrelation = DECORRELATION_VARIABLES
+
+    print "splitting..."
 
     # Split data
     if train:
@@ -435,6 +442,14 @@ def load_data (path, name='dataset', train=None, test=None, signal=None, backgro
         log.info("load_data: Selecting a random fraction {:.2f} of data (replace = {}, seed = {}).".format(sample, replace, seed))
         data = data.sample(frac=sample, random_state=seed, replace=False)
         pass
+    if test_full_signal:
+	log.info("load_data: Selecting only testing background and full signal")
+	data = data[(data['signal'] == 1) | ((data['train'] == 0) & (data['signal'] == 0))]
+	pass
+    if train_full_signal:
+	log.info("load_data: Selecting only training background and full signal")
+	data = data[(data['signal'] == 1) | ((data['train'] == 1) & (data['signal'] == 0))]
+	pass
 
     # Return
     return data, features_input, features_decorrelation

@@ -26,7 +26,7 @@ from sklearn.metrics import roc_curve, roc_auc_score
 from adversarial.utils import initialise, initialise_backend, parse_args, load_data, mkdir, wpercentile, latex
 from adversarial.profile import profile, Profile
 from adversarial.constants import *
-from run.adversarial.common import initialise_config
+#from run.adversarial.common import initialise_config
 from .studies.common import *
 import studies
 
@@ -42,20 +42,55 @@ def main (args):
     args, cfg = initialise(args)
 
     # Initialise Keras backend
-    initialise_backend(args)
+    #initialise_backend(args)
 
     # Neural network-specific initialisation of the configuration dict
-    initialise_config(args, cfg)
+    #initialise_config(args, cfg)
 
     # Keras import(s)
     #import keras.backend as K
     #from keras.models import load_model
 
     # Project import(s)
-    from adversarial.models import classifier_model, adversary_model, combined_model, decorrelation_model
+    #from adversarial.models import classifier_model, adversary_model, combined_model, decorrelation_model
 
     # Load data
     data, features, _ = load_data(args.input + 'data.h5', test=True)
+
+    file_title = "jet_pT.root"
+    var_title = "jet_pT"
+    var = "fjet_pt"
+    Normalized = True
+
+    f1 = ROOT.TFile(file_title, "RECREATE")
+    signal_dist = ROOT.TH1D("signal_"+var_title, "signal_"+var_title, 60, 0.,1.)
+    bg_dist = ROOT.TH1D("bg_"+var_title, "bg_"+var_title, 60, 0.,1.)
+    signal_data = data[data['signal']==1]
+    bg_data = data[data['signal']==0]
+                                                                                                               
+    root_numpy.fill_hist(signal_dist, signal_data[var], weights=np.full(len(data[data['signal'] == 1]), 0.01))
+    root_numpy.fill_hist(bg_dist, bg_data[var], weights=bg_data["weight_test"])
+    canv = ROOT.TCanvas("jet_pT", "jet_pT", 600, 600)
+    signal_dist.SetLineColor(4)
+    bg_dist.SetLineColor(2)
+    leg = ROOT.TLegend(0.5,0.8,0.9,0.9)
+    leg.AddEntry(signal_dist, "signal")
+    leg.AddEntry(bg_dist, "bg")
+    signal_dist.GetXaxis().SetTitle(var_title)
+    if Normalized:
+    	signal_dist.DrawNormalized()
+    	bg_dist.DrawNormalized("SAME")
+    else:
+        signal_dist.Draw()
+        bg_dist.Draw("SAME")
+    canv.Write()
+    f1.Close()
+
+    #Plot_variable("jet_pT.root", "jet_pT", "fjet_pt", data, Normalized=True)
+    #data, features, _ = load_data(args.input + 'data.h5', sample=1.)
+
+    #log.info("load_data: Selecting a random fraction {:.2f} of data (replace = {}, seed = {}).".format(sample, replace, seed))
+    #data = data.sample(frac=sample, random_state=seed, replace=False)
 
 
     # Common definitions
@@ -178,11 +213,11 @@ def perform_studies (data, args, tagger_features):
     pt_ranges = [None, (200, 500), (500, 1000), (1000, 2000)]
 
     # Perform combined robustness study     ## need to add npv to the data
-    with Profile("Study: Robustness"):
-        for masscut in masscuts:
-            studies.robustness_full(data, args, tagger_features, masscut=masscut)
-            pass
-        pass
+    #with Profile("Study: Robustness"):
+    #    for masscut in masscuts:
+    #        studies.robustness_full(data, args, tagger_features, masscut=masscut)
+    #        pass
+    #    pass
 
     # Perform jet mass distribution comparison study
     #with Profile("Study: Jet mass comparison"):
@@ -215,6 +250,13 @@ def perform_studies (data, args, tagger_features):
 
     # Perform ROC study
     #with Profile("Study: ROC"):
+    #	masscuts = [False]
+    #	#pt_ranges = [(200,2000)]
+    #	#pt_ranges = [(200,2000),(400,2000), (600,2000), (800,2000), (1000,2000), (1200,2000), (1400,2000), (1600,2000), (1800,2000)]
+    #	#pt_ranges = [(200,1800), (200,1600), (200,1400), (200,1200), (200,1000), (200,800), (200,600), (200,400)]
+    #	#pt_ranges = [(200,2000), (200,400),(400,600),(600,800),(800,1000),(1000,1200),(1200,1400),(1400,1600),(1600,1800),(1800,2000)]
+    #	#pt_ranges = [(200,2000), (300,1900), (400,1800), (500,1700), (600,1600), (700,1500), (800,1400), (900,1300), (1000,1200)]
+    #	#pt_ranges = [(1900,300), (1800,400), (1700,500), (1600,600), (1500,700), (1400,800), (1300,900), (1200,1000)]
     #    for masscut, pt_range in itertools.product(masscuts, pt_ranges):
     #        studies.roc(data, args, tagger_features, masscut=masscut, pt_range=pt_range)
     #        pass
@@ -236,6 +278,31 @@ def perform_studies (data, args, tagger_features):
 
     return
 
+def Plot_variable(file_title, var_title, var, data, Normalized=False):
+    f1 = ROOT.TFile(file_title, "RECREATE")
+    signal_dist = ROOT.TH1D("signal_"+var_title, "signal_"+var_title, 60, 0.,1.)
+    bg_dist = ROOT.TH1D("bg_"+var_title, "bg_"+var_title, 60, 0.,1.)
+    signal_data = data[data['signal']==1]
+    bg_data = data[data['signal']==0]
+
+    root_numpy.fill_hist(signal_dist, signal_data[var], weights=np.full(len(data[data['signal'] == 1]), 0.01))
+    root_numpy.fill_hist(bg_dist, bg_data[var], weights=bg_data["weight_test"])
+    canv = ROOT.TCanvas(var_title, var_title, 600, 600)
+    signal_dist.SetLineColor(4)
+    bg_dist.SetLineColor(2)
+    leg = ROOT.TLegend(0.5,0.8,0.9,0.9)
+    leg.AddEntry(signal_dist, "signal")
+    leg.AddEntry(bg_dist, "bg")
+    signal_dist.GetXaxis().SetTitle(var_title)
+    if Normalized:
+    	signal_dist.DrawNormalized()
+    	bg_dist.DrawNormalized("SAME")
+    else:
+	signal_dist.Draw()
+	bg_dist.Draw("SAME")
+    canv.Write()
+    f1.Close()
+    return
 
 # Main function call
 if __name__ == '__main__':
