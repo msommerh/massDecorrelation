@@ -24,7 +24,7 @@ OMEGA_RANGE = np.linspace(0., 1.0, 2 * 50 + 1, endpoint = True)[1:]
 MASS_BINS = np.linspace(50., 300., 25 + 1, endpoint=True)
 
 TAU21BINS = np.linspace(0., 1., 501, endpoint=True)
-D2BINS = np.linspace(0., 5., 500 + 1, endpoint=True)
+#D2BINS = np.linspace(0., 5., 500 + 1, endpoint=True)
 N2BINS = np.linspace(0, 0.6, 500 + 1, endpoint=True)
 
 # Adds the CSS variable to the data (assuming Ginv, F files exist)

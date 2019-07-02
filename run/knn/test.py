@@ -32,6 +32,13 @@ BOUNDS = [
 
 NB_CONTOUR = 13 * 16
 
+##only for reproducing the CMS-EXO-17-001 percentile:
+AXIS = {      # Dict holding (num_bins, axis_min, axis_max) for axis variables
+    'fjet_rho': (20, -7.0, -1.5),
+    'fjet_pt':  (20, 200., 1200.),
+}
+
+
 # Shout out to Cynthia Brewer and Mark Harrower
 # [http://colorbrewer2.org]. Palette is colorblind-safe.
 rgbs = [
@@ -59,9 +66,9 @@ for bound in BOUNDS:
     bound.SetLineStyle(2)
     pass
 
-#ZRANGE = (0.125, 0.325)
-#ZRANGE = (0., 2.5)
-ZRANGE = (0., 0.8)
+#ZRANGE = (0., 0.8)  #for tau21
+#ZRANGE = (0., 0.5) #for N2
+ZRANGE = (0.12,0.3)
 
 # Main function definition
 @profile
@@ -75,6 +82,12 @@ def main (args):
     data, _, _ = load_data(args.input + 'data.h5', train_full_signal=True)
     msk_sig = data['signal'] == 1
     msk_bkg = ~msk_sig
+
+    #variable = VARTAU21
+    #bg_eff = TAU21EFF
+    variable = VARN2
+    #bg_eff = N2EFF
+    bg_eff = 5
 
     # -------------------------------------------------------------------------
     ####
@@ -96,14 +109,16 @@ def main (args):
     # -------------------------------------------------------------------------
 
     # Fill measured profile
-    profile_meas, _ = fill_profile(data[msk_bkg])
+    profile_meas, _ = fill_profile(data[msk_bkg], variable, bg_eff)
 
     # Add k-NN variable
     knnfeat = 'knn'
-    add_knn(data, newfeat=knnfeat, path='models/knn/knn_{}_{}.pkl.gz'.format(VAR, EFF))
+    #add_knn(data, feat=variable, newfeat=knnfeat, path='models/knn/knn_{}_{}.pkl.gz'.format(variable, bg_eff))
+    add_knn(data, feat=variable, newfeat=knnfeat, path='models/knn2/knn_{}_{}.pkl.gz'.format(variable, bg_eff))
 
     # Loading KNN classifier
-    knn = loadclf('models/knn/knn_{:s}_{:.0f}.pkl.gz'.format(VAR, EFF))
+    #knn = loadclf('models/knn/knn_{:s}_{:.0f}.pkl.gz'.format(variable, bg_eff))
+    knn = loadclf('models/knn2/knn_{:s}_{:.0f}.pkl.gz'.format(variable, bg_eff))
 
     # Filling fitted profile
     with Profile("Filling fitted profile"):
@@ -147,7 +162,7 @@ def main (args):
             profile = profile_fit if fit else profile_meas
 
             # Plot
-            plot(profile, fit)
+            plot(profile, fit, variable, bg_eff)
             pass
         pass
 
@@ -187,7 +202,7 @@ def main (args):
 
             red, green, blue = map(np.array, zip(*rgbs))
             nb_cols = len(rgbs)
-            stops = np.array([0] + list(np.linspace(0, 1, nb_cols - 1, endpoint=True) * (1. - EFF / 100.) + EFF / 100.))
+            stops = np.array([0] + list(np.linspace(0, 1, nb_cols - 1, endpoint=True) * (1. - bg_eff / 100.) + bg_eff / 100.))
             pass
 
         ROOT.TColor.CreateGradientColorTable(nb_cols, stops, red, green, blue, NB_CONTOUR)
@@ -241,7 +256,7 @@ def main (args):
         # Styling
         profile.GetXaxis().SetTitle("Large-#it{R} jet " + latex(VARX, ROOT=True) + " = log(m^{2}/p_{T}^{2})")
         profile.GetYaxis().SetTitle("Large-#it{R} jet " + latex(VARY, ROOT=True) + " [GeV]")
-        profile.GetZaxis().SetTitle("Selection efficiency for %s^{(%s%%)}" % (latex(VAR, ROOT=True), EFF))
+        profile.GetZaxis().SetTitle("Selection efficiency for %s^{(%s%%)}" % (latex(variable, ROOT=True), bg_eff))
 
         profile.GetYaxis().SetNdivisions(505)
         profile.GetZaxis().SetNdivisions(505)
@@ -258,7 +273,7 @@ def main (args):
         profile.Draw('COLZ')
 
         # Decorations
-        c.text(qualifier=QUALIFIER, ymax=0.92, xmin=0.15)
+        c.text(qualifier=QUALIFIER, ymax=0.92, xmin=0.15, ATLAS=False)
         c.text(["#sqrt{s} = 13 TeV", "#it{W} jets" if sig else "Multijets"], ATLAS=False)
 
         # -- Efficiencies
@@ -283,13 +298,13 @@ def main (args):
 
         # Save
         mkdir('figures/knn/')
-        c.save('figures/knn/knn_eff_{}_{:s}_{:.0f}.pdf'.format('sig' if sig else 'bkg', VAR, EFF))
+        c.save('figures/knn/knn_eff_{}_{:s}_{:.0f}.pdf'.format('sig' if sig else 'bkg', variable, bg_eff))
         pass
 
     return
 
 
-def plot (profile, fit):
+def plot (profile, fit, variable, bg_eff):
     """
     Method for delegating plotting.
     """
@@ -305,7 +320,7 @@ def plot (profile, fit):
     # Styling
     profile.GetXaxis().SetTitle("Large-#it{R} jet " + latex(VARX, ROOT=True) + " = log(m^{2}/p_{T}^{2})")
     profile.GetYaxis().SetTitle("Large-#it{R} jet " + latex(VARY, ROOT=True) + " [GeV]")
-    profile.GetZaxis().SetTitle("%s %s^{(%s%%)}" % ("#it{k}-NN fitted" if fit else "Measured", latex(VAR, ROOT=True), EFF))
+    profile.GetZaxis().SetTitle("%s %s^{(%s%%)}" % ("#it{k}-NN fitted" if fit else "Measured", latex(variable, ROOT=True), bg_eff))
 
     profile.GetYaxis().SetNdivisions(505)
     profile.GetZaxis().SetNdivisions(505)
@@ -325,12 +340,12 @@ def plot (profile, fit):
     c.latex("m < 300 GeV", -2.5, BOUNDS[1].Eval(-2.5) - 30, align=23, angle=-57, textsize=13, textcolor=ROOT.kGray + 3)
 
     # Decorations
-    c.text(qualifier=QUALIFIER, ymax=0.92, xmin=0.15)
+    c.text(qualifier=QUALIFIER, ymax=0.92, xmin=0.15, ATLAS=False)
     c.text(["#sqrt{s} = 13 TeV", "Multijets"], ATLAS=False, textcolor=ROOT.kWhite)
 
     # Save
     mkdir('figures/knn/')
-    c.save('figures/knn/knn_{}_{:s}_{:.0f}.pdf'.format('fit' if fit else 'profile', VAR, EFF))
+    c.save('figures/knn/knn_{}_{:s}_{:.0f}.pdf'.format('fit' if fit else 'profile', variable, bg_eff))
     pass
 
 

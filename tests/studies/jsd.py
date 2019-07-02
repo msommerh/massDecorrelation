@@ -90,7 +90,7 @@ def jsd (data_, args, features, pt_range):
                 "{:s} {} {:.3f}".format(latex(feat, ROOT=True), '<' if signal_low(feat) else '>', cut),
                 "JSD = {:.4f}".format(jsd[feat][-1])] + \
                 (["p_{{T}} #in  [{:.0f}, {:.0f}] GeV".format(*pt_range)] if pt_range else []),
-                qualifier=QUALIFIER)
+                qualifier=QUALIFIER, ATLAS=False)
 
             # -- Save
             c.save('figures/temp_jsd_{:s}_{:.0f}{}.pdf'.format(feat, eff, '' if pt_range is None else '__pT{:.0f}_{:.0f}'.format(*pt_range)))
@@ -168,7 +168,7 @@ def plot (*argv):
         # Decorations
         c.xlabel("Background efficiency #varepsilon_{bkg}^{rel}")
         c.ylabel("Mass correlation, JSD")
-        c.text([], xmin=0.15, ymax = 0.96, qualifier=QUALIFIER)
+        c.text([], xmin=0.15, ymax = 0.96, qualifier=QUALIFIER, ATLAS=False)
         c.text(["#sqrt{s} = 13 TeV",  "Multijets"] + \
               (["p_{T} [GeV] #in", "    [{:.0f}, {:.0f}]".format(*pt_range)] if pt_range else []),
                ymax=0.85, ATLAS=None)

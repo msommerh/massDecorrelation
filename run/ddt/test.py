@@ -33,14 +33,21 @@ def main (args):
     args, cfg = initialise(args)
 
     # Load data
-    #data, _, _ = load_data(args.input + 'data.h5', test=True)
     data, _, _ = load_data(args.input + 'data.h5', test_full_signal=True)
 
-    # Add Tau21DDT variable
-    add_ddt(data, VAR_TAU21)
+    #variable = VAR_TAU21
+    variable = VAR_N2
+
+    if variable == VAR_N2:
+        fit_range = FIT_RANGE_N2
+    else:
+        fit_range = FIT_RANGE_TAU21
+
+    # Add DDT variable
+    add_ddt(data, feat=variable, path='models/ddt/ddt_{}.pkl.gz'.format(variable))
 
     # Load transform
-    ddt = loadclf('models/ddt/ddt.pkl.gz')
+    ddt = loadclf('models/ddt/ddt_{}.pkl.gz'.format(variable))
 
     # --------------------------------------------------------------------------
     # 1D plot
@@ -50,7 +57,7 @@ def main (args):
 
     # Fill profiles
     profiles = dict()
-    for var in [VAR_TAU21, VAR_TAU21 + 'DDT']:
+    for var in [variable, variable + 'DDT']:
         profiles[var] = fill_profile(data[msk], var)
         pass
 
@@ -73,7 +80,7 @@ def main (args):
         pass
 
     # Plot 1D transform
-    plot1D(graphs, ddt, arr_x)
+    plot1D(graphs, ddt, arr_x, variable, fit_range)
 
 
     # --------------------------------------------------------------------------
@@ -81,7 +88,10 @@ def main (args):
 
     # Create contours
     binsx = np.linspace(1.5, 5.0, 40 + 1, endpoint=True)
-    binsy = np.linspace(0.0, 1.4, 40 + 1, endpoint=True)
+    if variable == VAR_N2:
+    	binsy = np.linspace(0.0, 0.8, 40 + 1, endpoint=True)
+    else:
+	binsy = np.linspace(0.0, 1.4, 40 + 1, endpoint=True)
 
     contours = dict()
     for sig in [0,1]:
@@ -94,7 +104,7 @@ def main (args):
         w /= math.fsum(w)
 
         # Prepare inputs
-        X = data.loc[msk, [VAR_RHODDT, VAR_TAU21]].values
+        X = data.loc[msk, [VAR_RHODDT, variable]].values
 
         # Fill, store contour
         contour = ROOT.TH2F('2d_{}'.format(sig), "", len(binsx) - 1, binsx, len(binsy) - 1, binsy)
@@ -104,7 +114,7 @@ def main (args):
 
     # Linear discriminant analysis (LDA)
     lda = LinearDiscriminantAnalysis()
-    X = data[[VAR_RHODDT, VAR_TAU21]].values
+    X = data[[VAR_RHODDT, variable]].values
     y = data['signal'].values
     w = data[VAR_WEIGHT].values
     p = w / math.fsum(w)
@@ -121,7 +131,7 @@ def main (args):
     lda.fit(xboundary.reshape(-1,1), yboundary)
 
     # Plot 2D scatter
-    plot2D(data, ddt, lda, contours, binsx, binsy)
+    plot2D(data, ddt, lda, contours, binsx, binsy, variable)
     return
 
 
@@ -131,7 +141,8 @@ def plot1D (*argv):
     """
 
     # Unpack arguments
-    graphs, ddt, arr_x = argv
+    graphs, ddt, arr_x, variable, fit_range = argv
+    assert variable == VAR_TAU21 or variable == VAR_N2
 
     # Style
     ROOT.gStyle.SetTitleOffset(1.4, 'x')
@@ -146,8 +157,12 @@ def plot1D (*argv):
     pad.SetTopMargin(0.10)
 
     # Profiles
-    c.graph(graphs[VAR_TAU21],         label="Original, #tau_{21}",          linecolor=rp.colours[4], markercolor=rp.colours[4], markerstyle=24, legend_option='PE')
-    c.graph(graphs[VAR_TAU21 + 'DDT'], label="Transformed, #tau_{21}^{DDT}", linecolor=rp.colours[1], markercolor=rp.colours[1], markerstyle=20, legend_option='PE')
+    if variable == VAR_TAU21:
+    	c.graph(graphs[variable],         label="Original, #tau_{21}",          linecolor=rp.colours[4], markercolor=rp.colours[4], markerstyle=24, legend_option='PE')
+    	c.graph(graphs[variable + 'DDT'], label="Transformed, #tau_{21}^{DDT}", linecolor=rp.colours[1], markercolor=rp.colours[1], markerstyle=20, legend_option='PE')
+    elif variable == VAR_N2:
+    	c.graph(graphs[variable],         label="Original, #N_{2}",          linecolor=rp.colours[4], markercolor=rp.colours[4], markerstyle=24, legend_option='PE')
+    	c.graph(graphs[variable + 'DDT'], label="Transformed, #N_{2}^{DDT}", linecolor=rp.colours[1], markercolor=rp.colours[1], markerstyle=20, legend_option='PE')
 
     # Fit
     x1, x2 = min(arr_x), max(arr_x)
@@ -158,20 +173,30 @@ def plot1D (*argv):
 
     # Decorations
     c.xlabel("Large-#it{R} jet #rho^{DDT} = log[m^{2} / (p_{T} #times 1 GeV)]")
-    c.ylabel("#LT#tau_{21}#GT, #LT#tau_{21}^{DDT}#GT")
+    if variable == VAR_TAU21:
+        c.ylabel("#LT#tau_{21}#GT, #LT#tau_{21}^{DDT}#GT")
+    elif variable == VAR_N2:
+	c.ylabel("#LTN_{2}#GT, #LTN_{2}^{DDT}#GT")
 
-    c.text(["#sqrt{s} = 13 TeV,  Multijets"], qualifier=QUALIFIER)
+    c.text(["#sqrt{s} = 13 TeV,  Multijets"], qualifier=QUALIFIER, ATLAS=False)
     c.legend(width=0.25, xmin=0.57, ymax=None if "Internal" in QUALIFIER else 0.85)
 
     c.xlim(0, 6.0)
-    c.ylim(0, 1.4)
-    c.latex("Fit range", sum(FIT_RANGE) / 2., 0.08, textsize=13, textcolor=ROOT.kGray + 2)
-    c.xline(FIT_RANGE[0], ymax=0.82, text_align='BR', linecolor=ROOT.kGray + 2)
-    c.xline(FIT_RANGE[1], ymax=0.82, text_align='BL', linecolor=ROOT.kGray + 2)
+    if variable == VAR_N2:
+	ymax = 0.8
+    else:
+	ymax = 1.4
+    c.ylim(0, ymax)
+    c.latex("Fit range", sum(fit_range) / 2., 0.08, textsize=13, textcolor=ROOT.kGray + 2)
+    c.latex("Fit parameters:", 0.3, 0.58*ymax, align=11, textsize=14, textcolor=ROOT.kBlack)
+    c.latex("   intercept = {:7.4f}".format(intercept[0]), 0.3, 0.55*ymax, align=11, textsize=14, textcolor=ROOT.kBlack)
+    c.latex("   coef = {:7.4f}".format(coef[0]), 0.3, 0.525, align=11, textsize=14, textcolor=ROOT.kBlack)
+    c.xline(fit_range[0], ymax=0.82, text_align='BR', linecolor=ROOT.kGray + 2)
+    c.xline(fit_range[1], ymax=0.82, text_align='BL', linecolor=ROOT.kGray + 2)
 
     # Save
     mkdir('figures/ddt/')
-    c.save('figures/ddt/ddt.pdf')
+    c.save('figures/ddt/ddt_{}.pdf'.format(variable))
     return
 
 
@@ -181,7 +206,8 @@ def plot2D (*argv):
     """
 
     # Unpack arguments
-    data, ddt, lda, contours, binsx, binsy = argv
+    data, ddt, lda, contours, binsx, binsy, variable = argv
+    assert variable == VAR_TAU21 or variable == VAR_N2
 
     with TemporaryStyle() as style:
 
@@ -212,15 +238,18 @@ def plot2D (*argv):
         c.plot([y1,y2], bins=[x1,x2],  label='LDA boundary', linewidth=1, linestyle=2, option='L')
 
         # Decorations
-        c.text(["#sqrt{s} = 13 TeV"], qualifier=QUALIFIER)
+        c.text(["#sqrt{s} = 13 TeV"], qualifier=QUALIFIER, ATLAS=False)
         c.legend()
         c.ylim(binsy[0], binsy[-1])
         c.xlabel("Large-#it{R} jet " + latex('rhoDDT', ROOT=True))
-        c.ylabel("Large-#it{R} jet " + latex('Tau21',  ROOT=True))
+	if variable == VAR_TAU21:
+        	c.ylabel("Large-#it{R} jet " + latex('Tau21',  ROOT=True))
+	elif variable == VAR_N2:
+		c.ylabel("Large-#it{R} jet " + latex('N2',  ROOT=True))
 
         # Save
         mkdir('figures/ddt')
-        c.save('figures/ddt/ddt_2d.pdf')
+        c.save('figures/ddt/ddt_{}_2d.pdf'.format(variable))
         pass
     return
 

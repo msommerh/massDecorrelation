@@ -105,7 +105,7 @@ def plot (*argv):
         ["p_{{T}} #in  [{:.0f}, {:.0f}] GeV".format(pt_range[0], pt_range[1])] if pt_range is not None else []
         ) + (
         ["m #in  [{:.0f}, {:.0f}] GeV".format(mass_range[0], mass_range[1]),] if mass_range is not None else []
-        ), qualifier=QUALIFIER)
+        ), qualifier=QUALIFIER, ATLAS=False)
     c.ylim(4E-03, 4E-01)
     c.logy()
     c.legend()

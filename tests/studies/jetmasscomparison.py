@@ -15,7 +15,8 @@ import rootplotting as rp
 
 
 #@showsave
-def jetmasscomparison (data, args, features, eff_sig=50):
+#def jetmasscomparison (data, args, features, eff_sig=50):
+def jetmasscomparison (data_, args, features, pt_range, eff_sig=50):
     """
     Perform study of jet mass distributions before and after subtructure cut for
     different substructure taggers.
@@ -27,9 +28,18 @@ def jetmasscomparison (data, args, features, eff_sig=50):
         args: Namespace holding command-line arguments.
         features: Features for which to plot signal- and background distributions.
         eff_sig: Signal efficiency at which to impose cut.
+	pt_range: pT selection of the data.
     """
 
     # Define masks and direction-dependent cut value
+
+    # Select pT-range
+    if pt_range is not None:
+        data = data_[(data_['fjet_pt'] > pt_range[0]) & (data_['fjet_pt'] < pt_range[1])]
+    else:
+        data = data_
+        pass
+
     msk_sig = data['signal'] == 1
     cuts, msks_pass = dict(), dict()
     for feat in features:
@@ -44,13 +54,17 @@ def jetmasscomparison (data, args, features, eff_sig=50):
         pass
 
     # Perform plotting
-    c = plot(data, args, features, msks_pass, eff_sig)
+    c = plot(data, args, features, msks_pass, eff_sig, pt_range)
 
     # Perform plotting on individual figures
-    plot_individual(data, args, features, msks_pass, eff_sig)
+    plot_individual(data, args, features, msks_pass, eff_sig, pt_range)
 
     # Output
-    path = 'figures/jetmasscomparison__eff_sig_{:d}.pdf'.format(int(eff_sig))
+    #path = 'figures/jetmasscomparison__eff_sig_{:d}.pdf'.format(int(eff_sig))
+    if pt_range is not None:
+        path = 'figures/jetmasscomparison_pT{}to{}__eff_sig_{:d}.pdf'.format(pt_range[0], pt_range[1], int(eff_sig))
+    else:
+	path = 'figures/jetmasscomparison__eff_sig_{:d}.pdf'.format(int(eff_sig))
 
     return c, args, path
 
@@ -61,7 +75,7 @@ def plot (*argv):
     """
 
     # Unpack arguments
-    data, args, features, msks_pass, eff_sig = argv
+    data, args, features, msks_pass, eff_sig, pt_range = argv
 
     with TemporaryStyle() as style:
 
@@ -138,9 +152,16 @@ def plot (*argv):
         for ipad, pad in enumerate(c.pads()[1:], 1):
             offsetx = (0.20 if ipad % 2 else 0.05)
             offsety =  0.20 * ((2 - (ipad // 2)) / float(2.))
-            pad.legend(width=0.25, xmin=0.68 - offsetx, ymax=0.80 - offsety)
-            pad.latex("Tagged multijets:", NDC=True, x=0.93 - offsetx, y=0.84 - offsety, textcolor=ROOT.kGray + 3, textsize=style.GetLegendTextSize() * 0.8, align=31)
-            #pad._legends[-1].SetMargin(0.35)   			##probably need to replace these to make the legend look better....
+            #pad.legend(width=0.25, xmin=0.68 - offsetx, ymax=0.80 - offsety)
+	    pad.legend(width=0.25, xmin=0.7 - offsetx, ymax=0.95 - offsety)
+            #pad.latex("Tagged multijets:", NDC=True, x=0.93 - offsetx, y=0.84 - offsety, textcolor=ROOT.kGray + 3, textsize=style.GetLegendTextSize() * 0.8, align=31)
+	    if pt_range is not None:
+		pad.latex("Tagged multijets with pT #in [{:.0f}, {:.0f}] GeV:".format(pt_range[0], pt_range[1]), NDC=True, x=0.83 - offsetx, y=0.84 - offsety, textcolor=ROOT.kGray + 3, textsize=style.GetLegendTextSize() * 0.6, align=31)            
+	    else:
+		pad.latex("Tagged multijets:", NDC=True, x=0.93 - offsetx, y=0.84 - offsety, textcolor=ROOT.kGray + 3, textsize=style.GetLegendTextSize() * 0.8, align=31)
+
+
+	    #pad._legends[-1].SetMargin(0.35)   			##probably need to replace these to make the legend look better....
             #pad._legends[-1].SetTextSize(style.GetLegendTextSize())
             pass
 
@@ -182,7 +203,7 @@ def plot (*argv):
 
         c.pads()[0].text(["#sqrt{s} = 13 TeV,  #it{W} jet tagging",
                     "Cuts at #varepsilon_{sig}^{rel} = %.0f%%" % eff_sig,
-                    ], xmin=0.2, ymax=0.72, qualifier=QUALIFIER)
+                    ], xmin=0.2, ymax=0.72, qualifier=QUALIFIER, ATLAS=False)
 
         for pad in c.pads()[1:]:
             pad.ylim(ymin, ymax)
@@ -200,7 +221,7 @@ def plot_individual (*argv):
     """
 
     # Unpack arguments
-    data, args, features, msks_pass, eff_sig = argv
+    data, args, features, msks_pass, eff_sig, pt_range = argv
 
     with TemporaryStyle() as style:
 
@@ -259,7 +280,7 @@ def plot_individual (*argv):
 
                 c.text(["#sqrt{s} = 13 TeV,  #it{W} jet tagging",
                         "Cuts at #varepsilon_{sig}^{rel} = %.0f%%" % eff_sig,
-                        ], xmin=0.2, ymax=0.80, qualifier=QUALIFIER)
+                        ], xmin=0.2, ymax=0.80, qualifier=QUALIFIER, ATLAS=False)
 
 
             else:
@@ -299,7 +320,11 @@ def plot_individual (*argv):
                 y =  0.46  if first else 0.68
                 dy = 0.025 if first else 0.04
                 c.legend(width=0.25, xmin=0.63, ymax=y)
-                c.latex("Tagged multijets:", NDC=True, x=0.87, y=y + dy, textcolor=ROOT.kGray + 3, textsize=style.GetLegendTextSize() * 0.9, align=31)
+                #c.latex("Tagged multijets:", NDC=True, x=0.87, y=y + dy, textcolor=ROOT.kGray + 3, textsize=style.GetLegendTextSize() * 0.9, align=31)
+		if pt_range is not None:
+		    c.latex("Tagged multijets #in [{:.0f}, {:.0f}] GeV:".format(pt_range[0], pt_range[1]), NDC=True, x=0.77, y=y + dy, textcolor=ROOT.kGray + 3, textsize=style.GetLegendTextSize() * 0.7, align=31)
+		else:
+		    c.latex("Tagged multijets:", NDC=True, x=0.87, y=y + dy, textcolor=ROOT.kGray + 3, textsize=style.GetLegendTextSize() * 0.9, align=31)
                 c.pad()._legends[-1].SetMargin(0.35)
                 c.pad()._legends[-1].SetTextSize(style.GetLegendTextSize())
 
@@ -319,14 +344,17 @@ def plot_individual (*argv):
                 c.xlabel("Large-#it{R} jet mass [GeV]")
                 c.ylabel("Fraction of jets")
 
-                c.text(qualifier=QUALIFIER, xmin=0.25, ymax=0.82)
+                c.text(qualifier=QUALIFIER, xmin=0.25, ymax=0.82, ATLAS=False)
 
                 c.ylim(ymin, ymax)
                 c.logy()
                 pass
 
             # Save
-            c.save(path = 'figures/jetmasscomparison__eff_sig_{:d}__{}.pdf'.format(int(eff_sig), 'legend' if first else '{}_{}'.format(*feats)))
+	    if pt_range is not None:
+	        c.save(path = 'figures/jetmasscomparison_pT'+str(pt_range[0])+'to'+str(pt_range[1])+'__eff_sig_{:d}__{}.pdf'.format(int(eff_sig), 'legend' if first else '{}_{}'.format(*feats)))
+	    else:
+		c.save(path = 'figures/jetmasscomparison__eff_sig_{:d}__{}.pdf'.format(int(eff_sig), 'legend' if first else '{}_{}'.format(*feats)))
             pass
         pass  # end temprorary style
 

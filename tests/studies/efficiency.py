@@ -103,7 +103,7 @@ def plot (*argv):
                 #"#it{W} jet tagging",
                 "Cuts on {}".format(latex(feat, ROOT=True)),
                 ],
-               qualifier=QUALIFIER)
+               qualifier=QUALIFIER, ATLAS=False)
         c.ylim(0, 2.0)
         c.legend(reverse=True, width=0.25, ymax=0.87, header="Incl. #bar{#varepsilon}_{bkg}^{rel}:")
         pass

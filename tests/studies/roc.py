@@ -48,13 +48,13 @@ def roc (data_, args, features, masscut=False, pt_range=(200, 2000)):
         data = data_
         pass
 	
-    test_var = 'fjet_tau21DDT'
-    test_var_title = "tau21_DDT_pT{}to{}.root".format(pt_range[0],pt_range[1])
+    #test_var = 'fjet_tau21DDT'
+    #test_var_title = "tau21_DDT_pT{}to{}.root".format(pt_range[0],pt_range[1])
     #test_var = 'fjet_tau21kNN'
     #test_var_title = "tau21_kNN_pT{}to{}.root".format(pt_range[0],pt_range[1])
 
-    print "number of signal jets:", len(data[data['signal'] == 1])
-    print "number of background jets:", len(data[data['signal'] == 0])
+    #print "number of signal jets:", len(data[data['signal'] == 1])
+    #print "number of background jets:", len(data[data['signal'] == 0])
 
     #manual_weights = data['weight_test']
     #manual_weights[manual_weights != 1.] = 0.001
@@ -65,31 +65,33 @@ def roc (data_, args, features, masscut=False, pt_range=(200, 2000)):
     #signal_weights = manual_weights[data['signal']==1]
     #bg_weights = manual_weights[data['signal']==0]
 
+    ## make histograms to create own ROC curves in separate script for double-check
     #Make_Binned_ROC_histograms("full_signal", signal_data['fjet_tau21DDT'], signal_data['fjet_tau21kNN'], signal_data['fjet_pt'], [200,2000], sample_weights=signal_weights)
     #Make_Binned_ROC_histograms("full_bg", bg_data['fjet_tau21DDT'], bg_data['fjet_tau21kNN'], bg_data['fjet_pt'], [200,2000], sample_weights=bg_weights)
 
-    f1 = ROOT.TFile(test_var_title, "RECREATE")
-    signal_dist = ROOT.TH1D("signal_"+test_var_title, "signal_"+test_var_title, 60, 0.,1.)
-    bg_dist = ROOT.TH1D("bg_"+test_var_title, "bg_"+test_var_title, 60, 0.,1.)
-    signal_data = data[data['signal']==1]
-    bg_data = data[data['signal']==0]
+    ## draw distributions for double-check
+    #f1 = ROOT.TFile(test_var_title, "RECREATE")
+    #signal_dist = ROOT.TH1D("signal_"+test_var_title, "signal_"+test_var_title, 60, 0.,1.)
+    #bg_dist = ROOT.TH1D("bg_"+test_var_title, "bg_"+test_var_title, 60, 0.,1.)
+    #signal_data = data[data['signal']==1]
+    #bg_data = data[data['signal']==0]
 
-    root_numpy.fill_hist(signal_dist, signal_data[test_var], weights=np.full(len(data[data['signal'] == 1]), 0.01))
-    root_numpy.fill_hist(bg_dist, bg_data[test_var], weights=bg_data["weight_test"])
-    canv = ROOT.TCanvas(test_var_title, test_var_title, 600, 600)
-    signal_dist.SetLineColor(4)
-    bg_dist.SetLineColor(2)
-    leg = ROOT.TLegend(0.5,0.8,0.9,0.9)
-    leg.AddEntry(signal_dist, "signal")
-    leg.AddEntry(bg_dist, "bg")
-    if test_var == 'fjet_tau21DDT':
-        signal_dist.GetXaxis().SetTitle("#tau_{21}^{DDT}")
-    elif test_var == 'fjet_tau21kNN':
-        signal_dist.GetXaxis().SetTitle("#tau_{21}^{kNN}")
-    signal_dist.DrawNormalized()
-    bg_dist.DrawNormalized("SAME")
-    canv.Write()
-    f1.Close()
+    #root_numpy.fill_hist(signal_dist, signal_data[test_var], weights=signal_data["weight_test"])
+    #root_numpy.fill_hist(bg_dist, bg_data[test_var], weights=bg_data["weight_test"])
+    #canv = ROOT.TCanvas(test_var_title, test_var_title, 600, 600)
+    #signal_dist.SetLineColor(4)
+    #bg_dist.SetLineColor(2)
+    #leg = ROOT.TLegend(0.5,0.8,0.9,0.9)
+    #leg.AddEntry(signal_dist, "signal")
+    #leg.AddEntry(bg_dist, "bg")
+    #if test_var == 'fjet_tau21DDT':
+    #    signal_dist.GetXaxis().SetTitle("#tau_{21}^{DDT}")
+    #elif test_var == 'fjet_tau21kNN':
+    #    signal_dist.GetXaxis().SetTitle("#tau_{21}^{kNN}")
+    #signal_dist.Draw()
+    #bg_dist.Draw("SAME")
+    #canv.Write()
+    #f1.Close()
 
     # (Opt.) masscut | @NOTE: Duplication with adversarial/utils/metrics.py
     msk = (data['fjet_mass'] > 60.) & (data['fjet_mass'] < 100.) if masscut else np.ones_like(data['signal']).astype(bool)
@@ -103,8 +105,7 @@ def roc (data_, args, features, masscut=False, pt_range=(200, 2000)):
 
         eff_bkg, eff_sig, thresholds = roc_curve(data.loc[msk, 'signal'].values,
                                                  data.loc[msk, feat]    .values * sign,
-                                                 #sample_weight=data.loc[msk, 'weight_test'].values)
-						 sample_weight=manual_weights)
+                                                 sample_weight=data.loc[msk, 'weight_test'].values)
 
         if masscut:
             eff_sig_mass = np.mean(msk[data['signal'] == 1])
@@ -200,7 +201,7 @@ def plot (*argv):
     # Decorations
     c.xlabel("Signal efficiency #varepsilon_{sig}^{rel}")
     c.ylabel("Background rejection 1/#varepsilon_{bkg}^{rel}")
-    c.text([], xmin=0.15, ymax=0.96, qualifier=QUALIFIER)
+    c.text([], xmin=0.15, ymax=0.96, qualifier=QUALIFIER, ATLAS=False)
     c.text(["#sqrt{s} = 13 TeV",
             "#it{W} jet tagging"] + (
                 ["p_{{T}} #in  [{:.0f}, {:.0f}] GeV".format(pt_range[0], pt_range[1])] if pt_range is not None else []

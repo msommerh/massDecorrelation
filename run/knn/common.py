@@ -16,12 +16,12 @@ from adversarial.profile import profile
 
 # Common definition(s)
 #VAR  = 'D2'   # 'NN' | Substructure variable to decorrelate
-#VAR  = 'fjet_N2_beta1'
-#VAR  = 'fjet_N2_beta2'
-VAR  = 'fjet_tau21'
+VARN2  = 'fjet_N2_beta1'
+VARTAU21  = 'fjet_tau21'
+N2EFF  = 15 # corresponding to 50% signal eff with N2
+TAU21EFF  = 15 # corresponding to 50% signal eff with tau21
 #VAR  = 'fjet_tau21_r'
 #EFF  = 16     # '95' | Fixed backround efficiency at which to perform decorrelation
-EFF  = 15
 #VARX = 'rho'  # X-axis variable from which to decorrelate
 #VARY = 'pt'   # Y-axis variable from which to decorrelate
 VARX = 'fjet_rho'
@@ -82,7 +82,7 @@ def standardise (array, y=None):
 
 
 @profile
-def add_knn (data, feat=VAR, newfeat=None, path=None):
+def add_knn (data, feat=VARTAU21, newfeat=None, path=None):
     """
     Add kNN-transformed `feat` to `data`. Modifies `data` in-place.
 
@@ -112,8 +112,8 @@ def add_knn (data, feat=VAR, newfeat=None, path=None):
 
 
 @profile
-def fill_profile (data):
-    """Fill ROOT.TH2F with the measured, weighted values of the `EFF`-percentile
+def fill_profile (data, variable, bg_eff):
+    """Fill ROOT.TH2F with the measured, weighted values of the bg_eff-percentile
     of the background `VAR`. """
 
     # Define arrays
@@ -137,7 +137,7 @@ def fill_profile (data):
         # Percentile
         perc = np.nan
         if np.sum(msk) > 20:  # Ensure sufficient statistics for meaningful percentile
-            perc = wpercentile(data=   data.loc[msk, VAR]          .values, percents=EFF,
+            perc = wpercentile(data=   data.loc[msk, variable]          .values, percents=bg_eff,
                                weights=data.loc[msk, 'weight_test'].values)
             pass
 

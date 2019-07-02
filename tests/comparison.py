@@ -55,49 +55,15 @@ def main (args):
     #from adversarial.models import classifier_model, adversary_model, combined_model, decorrelation_model
 
     # Load data
-    data, features, _ = load_data(args.input + 'data.h5', test=True)
-
-    file_title = "jet_pT.root"
-    var_title = "jet_pT"
-    var = "fjet_pt"
-    Normalized = True
-
-    f1 = ROOT.TFile(file_title, "RECREATE")
-    signal_dist = ROOT.TH1D("signal_"+var_title, "signal_"+var_title, 60, 0.,1.)
-    bg_dist = ROOT.TH1D("bg_"+var_title, "bg_"+var_title, 60, 0.,1.)
-    signal_data = data[data['signal']==1]
-    bg_data = data[data['signal']==0]
-                                                                                                               
-    root_numpy.fill_hist(signal_dist, signal_data[var], weights=np.full(len(data[data['signal'] == 1]), 0.01))
-    root_numpy.fill_hist(bg_dist, bg_data[var], weights=bg_data["weight_test"])
-    canv = ROOT.TCanvas("jet_pT", "jet_pT", 600, 600)
-    signal_dist.SetLineColor(4)
-    bg_dist.SetLineColor(2)
-    leg = ROOT.TLegend(0.5,0.8,0.9,0.9)
-    leg.AddEntry(signal_dist, "signal")
-    leg.AddEntry(bg_dist, "bg")
-    signal_dist.GetXaxis().SetTitle(var_title)
-    if Normalized:
-    	signal_dist.DrawNormalized()
-    	bg_dist.DrawNormalized("SAME")
-    else:
-        signal_dist.Draw()
-        bg_dist.Draw("SAME")
-    canv.Write()
-    f1.Close()
-
-    #Plot_variable("jet_pT.root", "jet_pT", "fjet_pt", data, Normalized=True)
-    #data, features, _ = load_data(args.input + 'data.h5', sample=1.)
-
-    #log.info("load_data: Selecting a random fraction {:.2f} of data (replace = {}, seed = {}).".format(sample, replace, seed))
-    #data = data.sample(frac=sample, random_state=seed, replace=False)
+    #data, features, _ = load_data(args.input + 'data.h5', test=True)
+    data, features, _ = load_data(args.input + 'data.h5', test_full_signal=True)
 
 
     # Common definitions
     # --------------------------------------------------------------------------
     # -- k-nearest neighbour
-    #kNN_var = 'D2-k#minusNN'
-    kNN_var = 'fjet_tau21kNN'
+    kNN_var_N2 = 'N2-k#minusNN'
+    kNN_var_tau21 = 'tau21-k#minusNN'
 
     def meaningful_digits (number):
         digits = 0
@@ -131,25 +97,38 @@ def main (args):
 
     # Tagger feature collection
     #tagger_features = ['Tau21','Tau21DDT', 'D2', kNN_var, 'D2', 'D2CSS', 'NN', ann_var, 'Adaboost', uboost_var]
-    tagger_features = ['fjet_tau21','fjet_tau21DDT', 'fjet_tau21', kNN_var, 'fjet_tau21', 'fjet_tau21CSS']
-
+    #tagger_features = ['fjet_tau21', 'fjet_tau21DDT', 'fjet_tau21', 'fjet_tau21kNN', 'fjet_tau21', 'fjet_tau21CSS', 'fjet_N2_beta1', 'fjet_N2_beta1DDT', 'fjet_N2_beta1', 'fjet_N2_beta1kNN', 'fjet_N2_beta1', 'fjet_N2_beta1CSS']
+    tagger_features = ['fjet_N2_beta1', 'fjet_N2_beta1DDT', 'fjet_N2_beta1', 'fjet_N2_beta1kNN', 'fjet_N2_beta1', 'fjet_N2_beta1CSS']
 
     # Add variables
     # --------------------------------------------------------------------------
     with Profile("Add variables"):
 
-        # Tau21DDT
+        ## Tau21DDT
+        #from run.ddt.common import add_ddt
+        #add_ddt(data, feat='fjet_tau21', path='models/ddt/ddt_fjet_tau21.pkl.gz') 
+
+        # N2DDT
         from run.ddt.common import add_ddt
-        add_ddt(data, path='models/ddt/ddt.pkl.gz') 
+        add_ddt(data, feat='fjet_N2_beta1', path='models/ddt/ddt_fjet_N2_beta1.pkl.gz') 
 
-        # D2-kNN
-        from run.knn.common import add_knn, VAR as kNN_basevar, EFF as kNN_eff
-        print "k-NN base variable: {} (cp. {})".format(kNN_basevar, kNN_var)
-        add_knn(data, newfeat=kNN_var, path='models/knn/knn_{}_{}.pkl.gz'.format(kNN_basevar, kNN_eff))
+        ## Tau21-kNN
+        #from run.knn.common import add_knn, VARTAU21 as kNN_basevar, TAU21EFF as kNN_eff
+        #print "k-NN base variable: {} (cp. {})".format(kNN_basevar, kNN_var_tau21)
+        #add_knn(data, feat=kNN_basevar, path='models/knn/knn_{}_{}.pkl.gz'.format(kNN_basevar, kNN_eff))
 
-        # D2-CSS
+        # N2-kNN
+        from run.knn.common import add_knn, VARN2 as kNN_basevar, N2EFF as kNN_eff
+        print "k-NN base variable: {} (cp. {})".format(kNN_basevar, kNN_var_N2)
+        add_knn(data, feat=kNN_basevar, path='models/knn/knn_{}_{}.pkl.gz'.format(kNN_basevar, kNN_eff))
+
+        ## Tau21-CSS
+        #from run.css.common import add_css
+        #add_css("fjet_tau21", data)
+
+        # N2-CSS
         from run.css.common import add_css
-        add_css("fjet_tau21", data)
+        add_css("fjet_N2_beta1", data)
 
         # NN
         #from run.adversarial.common import add_nn
@@ -192,7 +171,7 @@ def main (args):
 
     # Remove unused variables
     #used_variables = set(tagger_features + ann_vars + uboost_vars + ['fjet_mass', 'fjet_pt', 'npv', 'weight_test'])
-    used_variables = set(tagger_features + ['fjet_mass', 'fjet_pt', 'weight_test']) ## need to put 'npv' back in for robustness study
+    used_variables = set(tagger_features + ['fjet_mass', 'fjet_pt', 'weight_test', 'npv']) ## need to put 'npv' back in for robustness study
     unused_variables = [var for var in list(data) if var not in used_variables]
     data.drop(columns=unused_variables)
     gc.collect()
@@ -212,19 +191,21 @@ def perform_studies (data, args, tagger_features):
     masscuts  = [True, False]
     pt_ranges = [None, (200, 500), (500, 1000), (1000, 2000)]
 
-    # Perform combined robustness study     ## need to add npv to the data
-    #with Profile("Study: Robustness"):
-    #    for masscut in masscuts:
-    #        studies.robustness_full(data, args, tagger_features, masscut=masscut)
-    #        pass
-    #    pass
+    # Perform combined robustness study    
+    with Profile("Study: Robustness"):
+        for masscut in masscuts:
+            studies.robustness_full(data, args, tagger_features, masscut=masscut)
+            pass
+        pass
 
-    # Perform jet mass distribution comparison study
+    ## Perform jet mass distribution comparison study
     #with Profile("Study: Jet mass comparison"):
-    #    studies.jetmasscomparison(data, args, tagger_features)
+    #    for pt_range in pt_ranges:
+    #        print "pt_range =", pt_range 
+    #        studies.jetmasscomparison(data, args, tagger_features, pt_range)
     #    pass
 
-    # Perform summary plot study    ##need to adjust function heavily but might be the money plot...
+    # Perform summary plot study  
     #with Profile("Study: Summary plot"):
     #    #regex_nn = re.compile('\#lambda=[\d\.]+')
     #    #regex_ub = re.compile('\#alpha=[\d\.]+')
@@ -239,7 +220,7 @@ def perform_studies (data, args, tagger_features):
     #        pass
     #    pass
 
-    # Perform distributions study
+    ## Perform distributions study
     #with Profile("Study: Substructure tagger distributions"):
     #    mass_ranges = np.linspace(50, 300, 5 + 1, endpoint=True)
     #    mass_ranges = [None] + zip(mass_ranges[:-1], mass_ranges[1:])
@@ -250,7 +231,7 @@ def perform_studies (data, args, tagger_features):
 
     # Perform ROC study
     #with Profile("Study: ROC"):
-    #	masscuts = [False]
+    #	#masscuts = [False]
     #	#pt_ranges = [(200,2000)]
     #	#pt_ranges = [(200,2000),(400,2000), (600,2000), (800,2000), (1000,2000), (1200,2000), (1400,2000), (1600,2000), (1800,2000)]
     #	#pt_ranges = [(200,1800), (200,1600), (200,1400), (200,1200), (200,1000), (200,800), (200,600), (200,400)]
@@ -263,11 +244,11 @@ def perform_studies (data, args, tagger_features):
     #    pass
 
     # Perform JSD study
-    #with Profile("Study: JSD"):
-    #    for pt_range in pt_ranges:
-    #        studies.jsd(data, args, tagger_features, pt_range)
-    #        pass
-    #    pass
+    with Profile("Study: JSD"):
+        for pt_range in pt_ranges:
+            studies.jsd(data, args, tagger_features, pt_range)
+            pass
+        pass
 
     ## Perform efficiency study
     #with Profile("Study: Efficiency"):
@@ -276,33 +257,7 @@ def perform_studies (data, args, tagger_features):
     #        pass
     #    pass
 
-    return
-
-def Plot_variable(file_title, var_title, var, data, Normalized=False):
-    f1 = ROOT.TFile(file_title, "RECREATE")
-    signal_dist = ROOT.TH1D("signal_"+var_title, "signal_"+var_title, 60, 0.,1.)
-    bg_dist = ROOT.TH1D("bg_"+var_title, "bg_"+var_title, 60, 0.,1.)
-    signal_data = data[data['signal']==1]
-    bg_data = data[data['signal']==0]
-
-    root_numpy.fill_hist(signal_dist, signal_data[var], weights=np.full(len(data[data['signal'] == 1]), 0.01))
-    root_numpy.fill_hist(bg_dist, bg_data[var], weights=bg_data["weight_test"])
-    canv = ROOT.TCanvas(var_title, var_title, 600, 600)
-    signal_dist.SetLineColor(4)
-    bg_dist.SetLineColor(2)
-    leg = ROOT.TLegend(0.5,0.8,0.9,0.9)
-    leg.AddEntry(signal_dist, "signal")
-    leg.AddEntry(bg_dist, "bg")
-    signal_dist.GetXaxis().SetTitle(var_title)
-    if Normalized:
-    	signal_dist.DrawNormalized()
-    	bg_dist.DrawNormalized("SAME")
-    else:
-	signal_dist.Draw()
-	bg_dist.Draw("SAME")
-    canv.Write()
-    f1.Close()
-    return
+    #return
 
 # Main function call
 if __name__ == '__main__':

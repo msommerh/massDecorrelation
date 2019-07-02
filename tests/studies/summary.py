@@ -241,7 +241,7 @@ def plot (*argv):
         c.latex("     Greater separation #rightarrow", midpointx, 1.1,  angle= 0, align=21, **opts_text)
 
         #c.text(TEXT + ["#it{W} jet tagging"], xmin=0.24, qualifier=QUALIFIER)
-        c.text([], xmin=0.15, ymax=0.96, qualifier=QUALIFIER)
+        c.text([], xmin=0.15, ymax=0.96, qualifier=QUALIFIER, ATLAS=False)
         c.text(TEXT + \
                ["#it{W} jet tagging"] + (
                     ["p_{{T}} #in  [{:.0f}, {:.0f}] GeV".format(pt_range[0], pt_range[1])] if pt_range is not None else []

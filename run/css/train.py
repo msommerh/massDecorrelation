@@ -42,9 +42,8 @@ def main (args):
     data, features, _ = load_data(args.input + 'data.h5', background=True, train=True)
 
     # Fill substructure profile
-    #perform_optimisation("D2", D2BINS, data)
-    #perform_optimisation("fjet_N2_beta1", N2BINS, data)
     perform_optimisation("fjet_tau21", TAU21BINS, data)
+    #perform_optimisation("fjet_N2_beta1", N2BINS, data)
     return
 
 
@@ -55,7 +54,6 @@ def perform_optimisation (var, bins, data):
     """
 
     # Fill 2D substructure profile
-    #profile2d = fill_2d_profile(data, var, bins, "m", MASS_BINS)
     profile2d = fill_2d_profile(data, var, bins, "fjet_mass", MASS_BINS)
 
     # Get 1D profile for lowest mass bin
@@ -127,7 +125,7 @@ def perform_optimisation (var, bins, data):
             c.ylabel("Number of jets p.d.f.")
             c.legend(xmin=0.45, ymax=0.76, width=0.25)
             c.text(["#sqrt{s} = 13 TeV,  Multijets",
-                    "KDE smoothed"], qualifier=QUALIFIER)
+                    "KDE smoothed"], qualifier=QUALIFIER, ATLAS=False)
             c.pad()._xaxis().SetTitleOffset(1.3)
             c.pad()._yaxis().SetNdivisions(105)
             c.pad()._primitives[-1].Draw('SAME AXIS')
@@ -188,7 +186,7 @@ def perform_optimisation (var, bins, data):
         c.ylabel("Best-fit #Omega_{D}")
         c.text(["#sqrt{s} = 13 TeV,  Multijets",
                 "CSS applied to {}".format(latex(var, ROOT=True)),
-                "Best-fit #alpha = {:.1f}".format(bestShapeVal)], qualifier=QUALIFIER)
+                "Best-fit #alpha = {:.1f}".format(bestShapeVal)], qualifier=QUALIFIER, ATLAS=False)
         c.legend(categories=[('Functional fit', {'linewidth': 2, 'linestyle': 2, 'linecolor': rp.colours[4]})])
         # Save
         c.save('figures/css/cssBestOmega_{}.pdf'.format(var))

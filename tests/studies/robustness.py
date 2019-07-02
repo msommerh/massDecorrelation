@@ -30,7 +30,8 @@ def robustness_full (data, args, features, masscut=False, num_bootstrap=5):
 
     # -- npv
     var = 'npv'
-    bins[var] = [0,  5.5, 10.5, 15.5, 20.5, 25.5, 30.5]
+    #bins[var] = [0,  5.5, 10.5, 15.5, 20.5, 25.5, 30.5]
+    bins[var] = [0,  5.5, 10.5, 15.5, 20.5, 25.5, 30.5, 35.5, 40.5, 50.5, 60.5, 80.5]
     effs[var], rejs[var], jsds[var], meanx[var], jsd_limits[var] = compute(data, args, features, var, bins[var], masscut, num_bootstrap)
 
     # Perform plotting
@@ -308,7 +309,7 @@ def plot_full (*argv):
             pad._xaxis().SetNdivisions(504)
             pass
 
-        c.text([], qualifier=QUALIFIER, xmin=margin_hori, ymax=1. - margin_vert + 0.03)
+        c.text([], qualifier=QUALIFIER, xmin=margin_hori, ymax=1. - margin_vert + 0.03, ATLAS=False)
 
         c.pads()[1].text(["#sqrt{s} = 13 TeV,  #it{W} jet tagging"] + \
                         (['m #in  [60, 100] GeV'] if masscut else []),
@@ -493,7 +494,7 @@ def plot_individual (*argv):
                 # Common decorations
                 c.pad()._xaxis().SetNdivisions(504)
 
-                c.text([], qualifier=QUALIFIER, xmin=margin_hori, ymax=1. - margin_vert + 0.03)
+                c.text([], qualifier=QUALIFIER, xmin=margin_hori, ymax=1. - margin_vert + 0.03, ATLAS=False)
 
                 c.text( ["#sqrt{s} = 13 TeV,  #it{W} jet tagging"] + \
                        (['m #in  [60, 100] GeV'] if masscut else []) + \
@@ -691,7 +692,7 @@ def plot (*argv):
         c.pads()[0].latex("Random guessing",   xmid, 2 * 0.9, align=23, textsize=11, angle=0, textcolor=ROOT.kGray + 2)
         c.pads()[1].latex("Maximal sculpting", xmid, 1 * 0.8, align=23, textsize=11, angle=0, textcolor=ROOT.kGray + 2)
 
-        c.text([], qualifier=QUALIFIER, xmin=0.15, ymax=0.93)
+        c.text([], qualifier=QUALIFIER, xmin=0.15, ymax=0.93, ATLAS=False)
 
         c.text(["#sqrt{s} = 13 TeV,  #it{W} jet tagging"] + \
                 (['m #in  [60, 100] GeV'] if masscut else []),

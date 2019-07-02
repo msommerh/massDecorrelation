@@ -88,7 +88,7 @@ def plot (*argv):
     c.ylabel("Fraction of jets")
     c.text(["#sqrt{s} = 13 TeV,  Multijets",
             "#varepsilon_{sig} = %d%% cut on %s" % (eff_sig, latex(feat, ROOT=True)),
-            ], qualifier=QUALIFIER)
+            ], qualifier=QUALIFIER, ATLAS=False)
 
     c.ylim(2E-04, 2E+02)
     c.logy()

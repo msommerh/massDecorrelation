@@ -37,17 +37,20 @@ def main (args):
     data, features, _ = load_data(args.input + 'data.h5', train=True, background=True)
 
     # Add CSS variable
-    #var = "D2"
-    var = "fjet_tau21"
-    add_css(var, data)
+    
+    var_tau21 = "fjet_tau21"
+    add_css(var_tau21, data)
 
-    # Plot D2(CSS) distributions for each mass bin
-    plot_distributions(data, var)
+    #var_N2 = "fjet_N2_beta1"
+    #add_css(var_N2, data)
 
+
+    # Plot CSS distributions for each mass bin
+    plot_distributions(data, var_tau21, TAU21BINS)
+    #plot_distributions(data, var_N2, N2BINS)
     return 0
 
-
-def plot_distributions (data, var):
+def plot_distributions (data, var, bins):
     """
     Method for delegating plotting
     """
@@ -104,7 +107,7 @@ def plot_distributions (data, var):
         c.ylabel("Number of jets p.d.f.")
         c.legend(xmin=0.45, ymax=0.76, width=0.25)
         c.text(["#sqrt{s} = 13 TeV,  Multijets",
-                "KDE smoothed"], qualifier=QUALIFIER)
+                "KDE smoothed"], qualifier=QUALIFIER, ATLAS=False)
         c.pad()._xaxis().SetTitleOffset(1.3)
         c.pad()._yaxis().SetNdivisions(105)
         c.pad()._primitives[-1].Draw('SAME AXIS')

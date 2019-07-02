@@ -18,15 +18,16 @@ from adversarial.profile import profile
 
 # Common definition(s)
 BINS = np.linspace(-1, 6, 7 * 4 + 1, endpoint=True)  # Binning in rhoDDT
-FIT_RANGE = (1.5, 4.0) # Range in rhoDDT to be fitted
-#VAR_TAU21  = 'fjet_tau21_wta' # 'Tau21'
+FIT_RANGE_TAU21 = (1.5, 4.0) # Range in rhoDDT to be fitted
+FIT_RANGE_N2 = (2.1, 4.0)
 VAR_TAU21  = 'fjet_tau21'
+VAR_N2 = 'fjet_N2_beta1'
 VAR_RHODDT = 'fjet_rhoDDT'    # 'rhoDDT'
 #VAR_WEIGHT = 'mcEventWeight'  # 'weight_test'
 VAR_WEIGHT = 'weight_test'
 
 @profile
-def add_ddt (data, feat=VAR_TAU21, newfeat=None, path='models/ddt/ddt.pkl.gz'):
+def add_ddt (data, feat=VAR_TAU21, newfeat=None, path='models/ddt/ddt_{}.pkl.gz'.format(VAR_TAU21)):
     """
     Add DDT-transformed `feat` to `data`. Modifies `data` in-place.
 
