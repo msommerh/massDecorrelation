@@ -188,9 +188,9 @@ def plot1D (*argv):
 	ymax = 1.4
     c.ylim(0, ymax)
     c.latex("Fit range", sum(fit_range) / 2., 0.08, textsize=13, textcolor=ROOT.kGray + 2)
-    c.latex("Fit parameters:", 0.3, 0.58*ymax, align=11, textsize=14, textcolor=ROOT.kBlack)
-    c.latex("   intercept = {:7.4f}".format(intercept[0]), 0.3, 0.55*ymax, align=11, textsize=14, textcolor=ROOT.kBlack)
-    c.latex("   coef = {:7.4f}".format(coef[0]), 0.3, 0.525, align=11, textsize=14, textcolor=ROOT.kBlack)
+    c.latex("Fit parameters:", 0.3, 0.7*ymax, align=11, textsize=14, textcolor=ROOT.kBlack)
+    c.latex("   intercept = {:7.4f}".format(intercept[0]), 0.3, 0.65*ymax, align=11, textsize=14, textcolor=ROOT.kBlack)
+    c.latex("   coef = {:7.4f}".format(coef[0]), 0.3, 0.6*ymax, align=11, textsize=14, textcolor=ROOT.kBlack)
     c.xline(fit_range[0], ymax=0.82, text_align='BR', linecolor=ROOT.kGray + 2)
     c.xline(fit_range[1], ymax=0.82, text_align='BL', linecolor=ROOT.kGray + 2)
 
