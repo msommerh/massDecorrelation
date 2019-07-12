@@ -34,8 +34,8 @@ NB_CONTOUR = 13 * 16
 
 ##only for reproducing the CMS-EXO-17-001 percentile:
 AXIS = {      # Dict holding (num_bins, axis_min, axis_max) for axis variables
-    'fjet_rho': (20, -7.0, -1.5),
-    'fjet_pt':  (20, 200., 1200.),
+    'rho': (20, -7.0, -1.5),
+    'pt':  (20, 200., 1200.),
 }
 
 
@@ -66,9 +66,12 @@ for bound in BOUNDS:
     bound.SetLineStyle(2)
     pass
 
-#ZRANGE = (0., 0.8)  #for tau21
-#ZRANGE = (0., 0.5) #for N2
-ZRANGE = (0.12,0.3)
+#ZRANGE = (0., 0.8)  # for tau21
+#ZRANGE = (0., 0.5) # for N2
+#ZRANGE = (0.12,0.3) # for N2 in comparison with CMS-EXO-17-001
+ZRANGE = (0., 1.) # for decDeepWvsQCD
+#ZRANGE = (0., 1.) # for DeepWvsQCD
+
 
 # Main function definition
 @profile
@@ -83,11 +86,14 @@ def main (args):
     msk_sig = data['signal'] == 1
     msk_bkg = ~msk_sig
 
-    #variable = VARTAU21
-    #bg_eff = TAU21EFF
-    variable = VARN2
-    #bg_eff = N2EFF
-    bg_eff = 5
+    #variable = VAR_TAU21; signal_above = False
+    #bg_eff = TAU21_EFF
+    #variable = VAR_N2; signal_above = False
+    #bg_eff = N2_EFF
+    #variable = VAR_DECDEEP; signal_above = True
+    #bg_eff = DECDEEP_EFF
+    variable = VAR_DEEP; signal_above = True
+    bg_eff = DEEP_EFF
 
     # -------------------------------------------------------------------------
     ####
@@ -109,16 +115,17 @@ def main (args):
     # -------------------------------------------------------------------------
 
     # Fill measured profile
-    profile_meas, _ = fill_profile(data[msk_bkg], variable, bg_eff)
+    with Profile("filling profile"):
+    	profile_meas, _ = fill_profile(data[msk_bkg], variable, bg_eff, signal_above=signal_above)
 
     # Add k-NN variable
-    knnfeat = 'knn'
-    #add_knn(data, feat=variable, newfeat=knnfeat, path='models/knn/knn_{}_{}.pkl.gz'.format(variable, bg_eff))
-    add_knn(data, feat=variable, newfeat=knnfeat, path='models/knn2/knn_{}_{}.pkl.gz'.format(variable, bg_eff))
+    with Profile("adding variable"):
+    	knnfeat = 'knn'
+    	add_knn(data, feat=variable, newfeat=knnfeat, path='models/knn/knn_{}_{}.pkl.gz'.format(variable, bg_eff))
 
     # Loading KNN classifier
-    #knn = loadclf('models/knn/knn_{:s}_{:.0f}.pkl.gz'.format(variable, bg_eff))
-    knn = loadclf('models/knn2/knn_{:s}_{:.0f}.pkl.gz'.format(variable, bg_eff))
+    with Profile("loading model"):
+    	knn = loadclf('models/knn/knn_{:s}_{:.0f}.pkl.gz'.format(variable, bg_eff))
 
     # Filling fitted profile
     with Profile("Filling fitted profile"):
@@ -155,20 +162,23 @@ def main (args):
 
 
     # Plotting
-    with Profile("Plotting"):
-        for fit in [False, True]:
+    for fit in [False, True]:
 
-            # Select correct profile
-            profile = profile_fit if fit else profile_meas
+        # Select correct profile
+        profile = profile_fit if fit else profile_meas
 
-            # Plot
-            plot(profile, fit, variable, bg_eff)
-            pass
+        # Plot
+        plot(profile, fit, variable, bg_eff)
         pass
+    pass
 
     # Plotting local selection efficiencies for D2-kNN < 0
     # -- Compute signal efficiency
     for sig, msk in zip([True, False], [msk_sig, msk_bkg]):
+	if sig:
+		print "working on signal"
+	else:
+		print "working on bg"
 
         if sig:
             rgbs = [
@@ -205,7 +215,7 @@ def main (args):
             stops = np.array([0] + list(np.linspace(0, 1, nb_cols - 1, endpoint=True) * (1. - bg_eff / 100.) + bg_eff / 100.))
             pass
 
-        ROOT.TColor.CreateGradientColorTable(nb_cols, stops, red, green, blue, NB_CONTOUR)
+            ROOT.TColor.CreateGradientColorTable(nb_cols, stops, red, green, blue, NB_CONTOUR)
 
         # Define arrays
         shape   = (AXIS[VARX][0], AXIS[VARY][0])
@@ -219,32 +229,38 @@ def main (args):
         effs = list()
         for edges in zip(bins[1][:-1], bins[1][1:]):
             msk_bin  = (data[VARY] > edges[0]) & (data[VARY] < edges[1])
-            msk_pass =  data[knnfeat] < 0
+	    if signal_above:
+		    msk_pass = data[knnfeat] > 0  # ensure correct cut direction
+	    else:
+                msk_pass =  data[knnfeat] < 0
             num = data.loc[msk & msk_bin & msk_pass, 'weight_test'].values.sum()
             den = data.loc[msk & msk_bin,            'weight_test'].values.sum()
             effs.append(num/den)
             pass
 
         # Fill profile
-        for i,j in itertools.product(*map(range, shape)):
+        with Profile("Fill profile"):
+            for i,j in itertools.product(*map(range, shape)):
+	        #print "Fill profile - (i, j) = ({}, {})".format(i,j)
+                # Bin edges in x and y
+                edges = [bin[idx:idx+2] for idx, bin in zip([i,j],bins)]
 
-            # Bin edges in x and y
-            edges = [bin[idx:idx+2] for idx, bin in zip([i,j],bins)]
+                # Masks
+                msks = [(data[var] > edges[dim][0]) & (data[var] <= edges[dim][1]) for dim, var in enumerate(VARS)]
+                msk_bin = reduce(lambda x,y: x & y, msks)
 
-            # Masks
-            msks = [(data[var] > edges[dim][0]) & (data[var] <= edges[dim][1]) for dim, var in enumerate(VARS)]
-            msk_bin = reduce(lambda x,y: x & y, msks)
-            data_ = data[msk & msk_bin]
-
-            # Set non-zero bin content
-            if np.sum(msk & msk_bin):
-                msk_pass = data_[knnfeat] < 0
-                num = data.loc[msk & msk_bin & msk_pass, 'weight_test'].values.sum()
-                den = data.loc[msk & msk_bin,            'weight_test'].values.sum()
-                eff = num/den
-                profile.SetBinContent(i + 1, j + 1, eff)
-                pass
-            pass
+                # Set non-zero bin content
+                if np.sum(msk & msk_bin):
+	    	if signal_above:
+	    	    msk_pass = data[knnfeat] > 0 # ensure correct cut direction
+	    	else:
+	    	    msk_pass = data[knnfeat] < 0
+	            num_msk = msk * msk_bin * msk_pass
+                    num = data.loc[num_msk, 'weight_test'].values.sum()
+                    den = data.loc[msk & msk_bin,            'weight_test'].values.sum()
+                    eff = num/den
+                    profile.SetBinContent(i + 1, j + 1, eff)
+                    pass
 
         c = rp.canvas(batch=True)
         pad = c.pads()[0]._bare()

@@ -25,7 +25,7 @@ ROOT.gStyle.SetTitleOffset(2.0, 'y')
 
 
 #@showsave
-def roc (data_, args, feature_dict, masscut=False, pt_range=(200, 2000), title=None):
+def roc (data_, args, features, masscut=False, pt_range=(200, 2000), title=None):
     """
     Perform study of ...
 
@@ -38,16 +38,6 @@ def roc (data_, args, feature_dict, masscut=False, pt_range=(200, 2000), title=N
         masscut: ...
     """
 
-    # Extract features and count appearance of each base variable
-    features = []
-    appearances = []
-    for basevar in feature_dict.keys():
-	for suffix in feature_dict[basevar]:
-	    features.append(basevar+suffix)
-	appearances.append(len(feature_dict[basevar]))
-
-    print "features =", features
-
     # Select pT-range
     if pt_range is not None:
 	if pt_range[0] > pt_range[1]:
@@ -58,10 +48,53 @@ def roc (data_, args, feature_dict, masscut=False, pt_range=(200, 2000), title=N
         data = data_
         pass
 	
+    #test_var = 'tau21DDT'
+    #test_var_title = "tau21_DDT_pT{}to{}.root".format(pt_range[0],pt_range[1])
+    #test_var = 'tau21kNN'
+    #test_var_title = "tau21_kNN_pT{}to{}.root".format(pt_range[0],pt_range[1])
+
+    #print "number of signal jets:", len(data[data['signal'] == 1])
+    #print "number of background jets:", len(data[data['signal'] == 0])
+
+    #manual_weights = data['weight_test']
+    #manual_weights[manual_weights != 1.] = 0.001
+    #manual_weights[manual_weights == 1.] = 0.01
+
+    #signal_data = data[data['signal']==1]
+    #bg_data = data[data['signal']==0]
+    #signal_weights = manual_weights[data['signal']==1]
+    #bg_weights = manual_weights[data['signal']==0]
+
+    ## make histograms to create own ROC curves in separate script for double-check
+    #Make_Binned_ROC_histograms("full_signal", signal_data['tau21DDT'], signal_data['tau21kNN'], signal_data['pt'], [200,2000], sample_weights=signal_weights)
+    #Make_Binned_ROC_histograms("full_bg", bg_data['tau21DDT'], bg_data['tau21kNN'], bg_data['pt'], [200,2000], sample_weights=bg_weights)
+
+    ## draw distributions for double-check
+    #f1 = ROOT.TFile(test_var_title, "RECREATE")
+    #signal_dist = ROOT.TH1D("signal_"+test_var_title, "signal_"+test_var_title, 60, 0.,1.)
+    #bg_dist = ROOT.TH1D("bg_"+test_var_title, "bg_"+test_var_title, 60, 0.,1.)
+    #signal_data = data[data['signal']==1]
+    #bg_data = data[data['signal']==0]
+
+    #root_numpy.fill_hist(signal_dist, signal_data[test_var], weights=signal_data["weight_test"])
+    #root_numpy.fill_hist(bg_dist, bg_data[test_var], weights=bg_data["weight_test"])
+    #canv = ROOT.TCanvas(test_var_title, test_var_title, 600, 600)
+    #signal_dist.SetLineColor(4)
+    #bg_dist.SetLineColor(2)
+    #leg = ROOT.TLegend(0.5,0.8,0.9,0.9)
+    #leg.AddEntry(signal_dist, "signal")
+    #leg.AddEntry(bg_dist, "bg")
+    #if test_var == 'tau21DDT':
+    #    signal_dist.GetXaxis().SetTitle("#tau_{21}^{DDT}")
+    #elif test_var == 'tau21kNN':
+    #    signal_dist.GetXaxis().SetTitle("#tau_{21}^{kNN}")
+    #signal_dist.Draw()
+    #bg_dist.Draw("SAME")
+    #canv.Write()
+    #f1.Close()
 
     # (Opt.) masscut | @NOTE: Duplication with adversarial/utils/metrics.py
-    #msk = (data['m'] > 60.) & (data['m'] < 100.) if masscut else np.ones_like(data['signal']).astype(bool)
-    msk = np.ones_like(data['signal']).astype(bool) if masscut is None else (data['m'] > masscut[0]) & (data['m'] < masscut[1]) 
+    msk = (data['m'] > 60.) & (data['m'] < 100.) if masscut else np.ones_like(data['signal']).astype(bool)
 
     # Computing ROC curves
     ROCs = dict()
@@ -119,15 +152,13 @@ def roc (data_, args, feature_dict, masscut=False, pt_range=(200, 2000), title=N
 
 
     # Perform plotting
-    c = plot(args, data, features, ROCs, AUCs, masscut, pt_range, appearances)
+    c = plot(args, data, features, ROCs, AUCs, masscut, pt_range)
 
     # Output
     if title is None:
-	#path = 'figures/roc{}{:s}.pdf'.format('__pT{:.0f}_{:.0f}'.format(pt_range[0], pt_range[1]) if pt_range is not None else '', '__masscut' if masscut else '')
-        path = 'figures/roc{}{:s}.pdf'.format('__pT{:.0f}_{:.0f}'.format(pt_range[0], pt_range[1]) if pt_range is not None else '', '' if masscut is None else '__masscut_'+str(masscut[0])+'to'+str(masscut[1]))
+	path = 'figures/roc{}{:s}.pdf'.format('__pT{:.0f}_{:.0f}'.format(pt_range[0], pt_range[1]) if pt_range is not None else '', '__masscut' if masscut else '')
     else:
-	#path = 'figures/'+title+'_roc{}{:s}.pdf'.format('__pT{:.0f}_{:.0f}'.format(pt_range[0], pt_range[1]) if pt_range is not None else '', '__masscut' if masscut else '')
-        path = 'figures/'+title+'_roc{}{:s}.pdf'.format('__pT{:.0f}_{:.0f}'.format(pt_range[0], pt_range[1]) if pt_range is not None else '', '' if masscut is None else '__masscut_'+str(masscut[0])+'to'+str(masscut[1]))
+	path = 'figures/'+title+'_roc{}{:s}.pdf'.format('__pT{:.0f}_{:.0f}'.format(pt_range[0], pt_range[1]) if pt_range is not None else '', '__masscut' if masscut else '')
 
     c.save(path = path) 
 
@@ -140,15 +171,14 @@ def plot (*argv):
     """
 
     # Unpack arguments
-    args, data, features, ROCs, AUCs, masscut, pt_range, appearances = argv
+    args, data, features, ROCs, AUCs, masscut, pt_range = argv
 
     # Canvas
     c = rp.canvas(batch=not args.show)
 
     # Plots
     # -- Random guessing
-    #bins = np.linspace(0.2, 1., 100 + 1, endpoint=True)  # original representation
-    bins = np.linspace(0., 1., 100 + 1, endpoint=True) #comparison with JME-18-002
+    bins = np.linspace(0.2, 1., 100 + 1, endpoint=True)
     bins = np.array([bins[0], bins[0] + 0.01 * np.diff(bins[:2])[0]] + list(bins[1:]))
     #bins = np.array([0.2] + list(bins[1:]))
     #edges = bins[1:-1]
@@ -160,18 +190,15 @@ def plot (*argv):
     for is_simple in [True, False]:
 
         # Split the legend into simple- and MVA taggers
-	indices = np.array([0]+appearances).cumsum()
-	for i in range(len(indices)-1):
-            for ifeat, feat in filter(lambda t: is_simple == signal_low(t[1]), enumerate(features[indices[i]:indices[i+1]])):
-                eff_sig, eff_bkg = ROCs[feat]
-                #c.graph(np.power(eff_bkg, -1.), bins=eff_sig, linestyle=1 + ifeat, linecolor=rp.colours[i % len(rp.colours)], linewidth=2, label=latex(feat, ROOT=True), option='L')  # original representation
-		c.graph(eff_bkg, bins=eff_sig, linestyle=1 + ifeat, linecolor=rp.colours[i % len(rp.colours)], linewidth=2, label=latex(feat, ROOT=True), option='L')  #comparison with JME-18-002
-                pass
+        for ifeat, feat in filter(lambda t: is_simple == signal_low(t[1]), enumerate(features)):
+            eff_sig, eff_bkg = ROCs[feat]
+            c.graph(np.power(eff_bkg, -1.), bins=eff_sig, linestyle=1 + (ifeat % 2), linecolor=rp.colours[(ifeat // 2) % len(rp.colours)], linewidth=2, label=latex(feat, ROOT=True), option='L')
+            pass
 
         # Draw class-specific legend
-        width = 0.25 #moved from 0.17 to 0.25
+        width = 0.17
         c.legend(header=("Analytical:" if is_simple else "MVA:"),
-                 width=width, xmin=0.45 + (width + 0.06) * (is_simple), ymax=0.888)   # xmin moved from 0.58 to 0.45, inserted width translation of 0.06
+                 width=width, xmin=0.58 + (width) * (is_simple), ymax=0.888)
         pass
 
     # Decorations
@@ -182,20 +209,16 @@ def plot (*argv):
             "#it{W} jet tagging"] + (
                 ["p_{{T}} #in  [{:.0f}, {:.0f}] GeV".format(pt_range[0], pt_range[1])] if pt_range is not None else []
             ) + (
-                #["Cut: m #in  [60, 100] GeV"] if masscut else []
-		[] if masscut is None else ["Cut: m #in  [{:.0f}, {:.0f}] GeV".format(masscut[0], masscut[1])]
+                ["Cut: m #in  [60, 100] GeV"] if masscut else []
             ),
            ATLAS=False)
 
-    if masscut is not None: masscut = True
     ranges = int(pt_range is not None) + int(masscut)
     mult = 10. if ranges == 2 else (2. if ranges == 1 else 1.)
 
-    #c.latex("Random guessing", 0.4, 1./0.4 * 0.9, align=23, angle=-12 + 2 * ranges, textsize=13, textcolor=ROOT.kGray + 2)
-    #c.xlim(0.2, 1.)
-    #c.ylim(1E+00, 5E+02 * mult) # original representation
-    c.xlim(0., 1.)  #comparison with JME-18-002
-    c.ylim(1E-04, 1.)
+    c.latex("Random guessing", 0.4, 1./0.4 * 0.9, align=23, angle=-12 + 2 * ranges, textsize=13, textcolor=ROOT.kGray + 2)
+    c.xlim(0.2, 1.)
+    c.ylim(1E+00, 5E+02 * mult)
     c.logy()
     c.legend()
 

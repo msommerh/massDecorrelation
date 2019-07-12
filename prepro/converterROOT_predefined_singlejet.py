@@ -68,11 +68,11 @@ for bin_ in bg_bins:
 # Utility function(s)
 glob_sort_list = lambda paths: sorted(list(itertools.chain.from_iterable(map(glob, paths))))
 
-branches_l1 = ['jj_l1_softDrop_mass', 'jj_l1_softDrop_pt', 'jj_l1_softDrop_eta', 'jj_l1_softDrop_phi', 'jj_l1_tau1', 'jj_l1_tau2', 'jj_l1_tau2/jj_l1_tau1','jj_l1_ecfN2_beta1', 'jj_l1_ecfN2_beta2','jj_l1_DeepBoosted_WvsQCD', 'jj_l1_MassDecorrelatedDeepBoosted_WvsQCD', 'nVert']
-selections_l1 = 'jj_l1_softDrop_mass>50 && jj_l1_softDrop_mass<300 && jj_l1_softDrop_pt>200 && jj_l1_softDrop_pt<2000 && TMath::Abs(jj_l1_softDrop_eta)<2.4'
-branches_l2 = ['jj_l2_softDrop_mass', 'jj_l2_softDrop_pt', 'jj_l2_softDrop_eta', 'jj_l2_softDrop_phi', 'jj_l2_tau1', 'jj_l2_tau2', 'jj_l2_tau2/jj_l2_tau1', 'jj_l2_ecfN2_beta1', 'jj_l2_ecfN2_beta2','jj_l2_DeepBoosted_WvsQCD', 'jj_l2_MassDecorrelatedDeepBoosted_WvsQCD', 'nVert']
-selections_l2 = 'jj_l2_softDrop_mass>50 && jj_l2_softDrop_mass<300 && jj_l2_softDrop_pt>200 && jj_l2_softDrop_pt<2000 && TMath::Abs(jj_l2_softDrop_eta)<2.4'
-branches_updated = ['m', 'pt', 'eta', 'phi', 'tau1', 'tau2', 'tau21', 'N2_B1', 'N2_B2','DeepWvsQCD', 'decDeepWvsQCD', 'npv']
+branches_l1 = ['jj_l1_softDrop_mass', 'jj_l1_softDrop_pt', 'jj_l1_softDrop_eta', 'jj_l1_softDrop_phi', 'jj_l1_tau2/jj_l1_tau1','jj_l1_ecfN2_beta1', 'jj_l1_DeepBoosted_WvsQCD', 'jj_l1_MassDecorrelatedDeepBoosted_WvsQCD', 'nVert']
+selections_l1 = 'jj_l1_softDrop_mass>50 && jj_l1_softDrop_mass<300 && jj_l1_softDrop_pt>200 && jj_l1_softDrop_pt<2000 && TMath::Abs(jj_l1_softDrop_eta)<2.4 && jj_l1_softDrop_pt > jj_l2_softDrop_pt'
+branches_l2 = ['jj_l2_softDrop_mass', 'jj_l2_softDrop_pt', 'jj_l2_softDrop_eta', 'jj_l2_softDrop_phi', 'jj_l2_tau2/jj_l2_tau1', 'jj_l2_ecfN2_beta1','jj_l2_DeepBoosted_WvsQCD', 'jj_l2_MassDecorrelatedDeepBoosted_WvsQCD', 'nVert']
+selections_l2 = 'jj_l2_softDrop_mass>50 && jj_l2_softDrop_mass<300 && jj_l2_softDrop_pt>200 && jj_l2_softDrop_pt<2000 && TMath::Abs(jj_l2_softDrop_eta)<2.4 && jj_l1_softDrop_pt < jj_l2_softDrop_pt'
+branches_updated = ['m', 'pt', 'eta', 'phi', 'tau21', 'N2_B1', 'DeepWvsQCD', 'decDeepWvsQCD', 'npv']
 
 def unravel (data, nleading):
     """

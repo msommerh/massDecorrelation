@@ -19,7 +19,7 @@ import rootplotting as rp
 
 @garbage_collect
 #@showsave
-def jsd (data_, args, features, pt_range):
+def jsd (data_, args, feature_dict, pt_range, title=None):
     """
     Perform study of ...
 
@@ -31,9 +31,17 @@ def jsd (data_, args, features, pt_range):
         features: Features for ...
     """
 
+    # Extract features and count appearance of each base variable
+    features = []
+    appearances = []
+    for basevar in feature_dict.keys():
+        for suffix in feature_dict[basevar]:
+            features.append(basevar+suffix)
+        appearances.append(len(feature_dict[basevar]))
+
     # Select data
     if pt_range is not None:
-        data = data_[(data_['fjet_pt'] > pt_range[0]) & (data_['fjet_pt'] < pt_range[1])]
+        data = data_[(data_['pt'] > pt_range[0]) & (data_['pt'] < pt_range[1])]
     else:
         data = data_
         pass
@@ -71,8 +79,8 @@ def jsd (data_, args, features, pt_range):
 
             # Get histograms / plot
             c = rp.canvas(batch=not args.show)
-            h_pass = c.hist(data.loc[ msk_pass & msk, 'fjet_mass'].values, bins=MASSBINS, weights=data.loc[ msk_pass & msk, 'weight_test'].values, normalise=True, **histstyle[True])   #, display=False)
-            h_fail = c.hist(data.loc[~msk_pass & msk, 'fjet_mass'].values, bins=MASSBINS, weights=data.loc[~msk_pass & msk, 'weight_test'].values, normalise=True, **histstyle[False])  #, display=False)
+            h_pass = c.hist(data.loc[ msk_pass & msk, 'm'].values, bins=MASSBINS, weights=data.loc[ msk_pass & msk, 'weight_test'].values, normalise=True, **histstyle[True])   #, display=False)
+            h_fail = c.hist(data.loc[~msk_pass & msk, 'm'].values, bins=MASSBINS, weights=data.loc[~msk_pass & msk, 'weight_test'].values, normalise=True, **histstyle[False])  #, display=False)
 
             # Convert to numpy arrays
             p = root_numpy.hist2array(h_pass)
@@ -93,7 +101,10 @@ def jsd (data_, args, features, pt_range):
                 qualifier=QUALIFIER, ATLAS=False)
 
             # -- Save
-            c.save('figures/temp_jsd_{:s}_{:.0f}{}.pdf'.format(feat, eff, '' if pt_range is None else '__pT{:.0f}_{:.0f}'.format(*pt_range)))
+	    if title is None:
+                c.save('figures/temp_jsd_{:s}_{:.0f}{}.pdf'.format(feat, eff, '' if pt_range is None else '__pT{:.0f}_{:.0f}'.format(*pt_range)))
+	    else:
+                c.save('figures/'+title+'_temp_jsd_{:s}_{:.0f}{}.pdf'.format(feat, eff, '' if pt_range is None else '__pT{:.0f}_{:.0f}'.format(*pt_range)))
 
             pass
         pass
@@ -107,10 +118,13 @@ def jsd (data_, args, features, pt_range):
         pass
 
     # Perform plotting
-    c = plot(args, data, effs, jsd, jsd_limits, features, pt_range)
+    c = plot(args, data, effs, jsd, jsd_limits, features, pt_range, appearances)
 
     # Output
-    path = 'figures/jsd{}.pdf'.format('' if pt_range is None else '__pT{:.0f}_{:.0f}'.format(*pt_range))
+    if title is None:
+        path = 'figures/jsd{}.pdf'.format('' if pt_range is None else '__pT{:.0f}_{:.0f}'.format(*pt_range))
+    else:
+	path = 'figures/'+title+'_jsd{}.pdf'.format('' if pt_range is None else '__pT{:.0f}_{:.0f}'.format(*pt_range))
     c.save(path = path)
     return c, args, path
 
@@ -121,7 +135,7 @@ def plot (*argv):
     """
 
     # Unpack arguments
-    args, data, effs, jsd, jsd_limits, features, pt_range = argv
+    args, data, effs, jsd, jsd_limits, features, pt_range, appearances = argv
 
     with TemporaryStyle() as style:
 
@@ -141,18 +155,24 @@ def plot (*argv):
 
         width = 0.15
         for is_simple in [True, False]:
-            for ifeat, feat in enumerate(features):
-                if is_simple != signal_low(feat): continue
-                colour = rp.colours[(ifeat // 2) % len(rp.colours)]
-                linestyle   =  1 + (ifeat % 2)
-                markerstyle = 20 + (ifeat % 2) * 4
-                c.plot(jsd[feat], bins=np.array(effs) / 100., linecolor=colour, markercolor=colour, linestyle=linestyle, markerstyle=markerstyle, label=latex(feat, ROOT=True), option='PL')
-                pass
+
+	    indices = np.array([0]+appearances).cumsum()
+	    for i in range(len(indices)-1):
+                for ifeat, feat in enumerate(features[indices[i]:indices[i+1]]):
+                    if is_simple != signal_low(feat): continue
+                    colour = rp.colours[i % len(rp.colours)]
+                    linestyle   =  1 + ifeat
+		    if ifeat == 0:
+			markerstyle = 20
+		    else:
+                        markerstyle = 23 + ifeat
+                    c.plot(jsd[feat], bins=np.array(effs) / 100., linecolor=colour, markercolor=colour, linestyle=linestyle, markerstyle=markerstyle, label=latex(feat, ROOT=True), option='PL')
+                    pass
 
             c.legend(header=("Analytical:" if is_simple else "MVA:"),
                      width=width * (1 + 0.8 * int(is_simple)), xmin=0.42 + (width + 0.05) * (is_simple), ymax=0.888,
                      columns=2 if is_simple else 1,
-                     margin=0.35)
+                     margin=0.35)   # moved one intendation to the left
             pass
 
         # Meaningful limits on JSD

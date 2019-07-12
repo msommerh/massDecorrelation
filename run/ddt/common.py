@@ -20,10 +20,13 @@ from adversarial.profile import profile
 BINS = np.linspace(-1, 6, 7 * 4 + 1, endpoint=True)  # Binning in rhoDDT
 FIT_RANGE_TAU21 = (1.5, 4.0) # Range in rhoDDT to be fitted
 FIT_RANGE_N2 = (2.1, 4.0)
-VAR_TAU21  = 'fjet_tau21'
-VAR_N2 = 'fjet_N2_beta1'
-VAR_RHODDT = 'fjet_rhoDDT'    # 'rhoDDT'
-#VAR_WEIGHT = 'mcEventWeight'  # 'weight_test'
+FIT_RANGE_DECDEEP = (0.2, 2.5)
+FIT_RANGE_DEEP = (2.1, 2.8)
+VAR_TAU21  = 'tau21'
+VAR_N2 = 'N2_B1'
+VAR_DECDEEP = 'decDeepWvsQCD'
+VAR_DEEP = 'DeepWvsQCD'
+VAR_RHODDT = 'rhoDDT'    # 'rhoDDT'
 VAR_WEIGHT = 'weight_test'
 
 @profile

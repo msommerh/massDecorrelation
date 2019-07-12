@@ -36,18 +36,21 @@ def main (args):
     # Load data
     data, features, _ = load_data(args.input + 'data.h5', train=True, background=True)
 
-    # Add CSS variable
-    
-    var_tau21 = "fjet_tau21"
-    add_css(var_tau21, data)
+    variable = "tau21"
+    bins = TAU21BINS
+    #variable = "N2_B1"
+    #bins = N2BINS
+    #variable = "decDeepWvsQCD"
+    #bins = DECDEEPBINS
+    #variable = "DeepWvsQCD"
+    #bins = DEEPBINS
 
-    #var_N2 = "fjet_N2_beta1"
-    #add_css(var_N2, data)
-
+    # Add CSS variable 
+    add_css(variable, data)
 
     # Plot CSS distributions for each mass bin
-    plot_distributions(data, var_tau21, TAU21BINS)
-    #plot_distributions(data, var_N2, N2BINS)
+    plot_distributions(data, variable, bins)
+
     return 0
 
 def plot_distributions (data, var, bins):
@@ -56,16 +59,13 @@ def plot_distributions (data, var, bins):
     """
 
     h_D2lowmass = None
-    #bins = D2BINS
-    bins = TAU21BINS
     for mass, (mass_down, mass_up) in enumerate(zip(MASS_BINS[:-1], MASS_BINS[1:])):
 
         # Canvas
         c = rp.canvas(batch=True)
 
         # Fill histograms
-        #msk = (data['m'] >= mass_down) & (data['m'] < mass_up)
-	msk = (data['fjet_mass'] >= mass_down) & (data['fjet_mass'] < mass_up)
+	msk = (data['m'] >= mass_down) & (data['m'] < mass_up)
         h_D2    = c.hist(data.loc[msk, var].values,         bins=bins, weights=data.loc[msk, 'weight_test'].values, display=False)
         h_D2CSS = c.hist(data.loc[msk, var + "CSS"].values, bins=bins, weights=data.loc[msk, 'weight_test'].values, display=False)
 

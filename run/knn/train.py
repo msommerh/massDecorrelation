@@ -34,15 +34,20 @@ def main (args):
     #data, _, _ = load_data(args.input + 'data.h5', train=True)
     data, _, _ = load_data(args.input + 'data.h5', train_full_signal=True)
 
-    #variable = VARTAU21
-    #bg_eff = TAU21EFF
-    variable = VARN2
-    #bg_eff = N2EFF
+    #variable = VAR_TAU21; signal_above=False
+    #bg_eff = TAU21_EFF
+    #variable = VAR_N2; signal_above=False
+    #bg_eff = N2_EFF
+    #variable = VAR_DECDEEP; signal_above=True
+    #bg_eff = DECDEEP_EFF
+    variable = VAR_DEEP; signal_above=True
+    bg_eff = DEEP_EFF
 
-    # training on a list of working points:
-    for bg_eff in WORKING_POINTS:
-	train(data, variable, bg_eff)
-    return 0
+    ## training on a list of working points:
+    #for bg_eff in WORKING_POINTS:
+    #    train(data, variable, bg_eff, signal_above=signal_above)
+    #print "reached end of main()"
+    #return 0
 
     # -------------------------------------------------------------------------
     ####
@@ -63,34 +68,22 @@ def main (args):
     ####     pass
     # -------------------------------------------------------------------------
 
-    ## Compute background efficiency at sig. eff. = 50%
-    #eff_sig = 0.5
-    #fpr, tpr, thresholds = roc_curve(data['signal'], data[variable], sample_weight=data['weight_test'])
-    #idx = np.argmin(np.abs(tpr - eff_sig))
-    #print "Background acceptance @ {:.2f}% sig. eff.: {:.2f}% ({} < {:.2f})".format(eff_sig * 100., (1 - fpr[idx]) * 100., variable, thresholds[idx])
-    #print "Chosen target efficiency: {:.2f}%".format(bg_eff)
+    # Compute background efficiency at sig. eff. = 50%
+    eff_sig = 0.5
+    fpr, tpr, thresholds = roc_curve(data['signal'], data[variable], sample_weight=data['weight_test'])
+    idx = np.argmin(np.abs(tpr - eff_sig))
+    print "Background acceptance @ {:.2f}% sig. eff.: {:.2f}% ({} < {:.2f})".format(eff_sig * 100., (1 - fpr[idx]) * 100., variable, thresholds[idx])
+    print "Chosen target efficiency: {:.2f}%".format(bg_eff)
+    ## I think if the signal is above the background, the bg efficiency should be taken as (100 - bg efficiency)
 
-    ## Filling profile
-    #data = data[data['signal'] == 0]
-    #profile_meas, (x,y,z) = fill_profile(data, variable, bg_eff)
+    train(data, variable, bg_eff, signal_above=signal_above)
+    print "reached end of main()"
+    return 0
 
-    ## Format arrays
-    #X = np.vstack((x.flatten(), y.flatten())).T
-    #Y = z.flatten()
-
-    ## Fit KNN regressor
-    #knn = KNeighborsRegressor(weights='distance')
-    #knn.fit(X, Y)
-
-    ## Save KNN classifier
-    #saveclf(knn, 'models/knn/knn_{:s}_{:.0f}.pkl.gz'.format(variable, bg_eff))
-    #print "reached end of main()"
-    #return 0
-
-def train(data, variable, bg_eff):
+def train(data, variable, bg_eff, signal_above=False):
     # Filling profile
     data = data[data['signal'] == 0]
-    profile_meas, (x,y,z) = fill_profile(data, variable, bg_eff)
+    profile_meas, (x,y,z) = fill_profile(data, variable, bg_eff, signal_above=signal_above)
 
     # Format arrays
     X = np.vstack((x.flatten(), y.flatten())).T
@@ -101,7 +94,7 @@ def train(data, variable, bg_eff):
     knn.fit(X, Y)
 
     # Save KNN classifier
-    saveclf(knn, 'models/knn2/knn_{:s}_{:.0f}.pkl.gz'.format(variable, bg_eff))
+    saveclf(knn, 'models/knn/knn_{:s}_{:.0f}.pkl.gz'.format(variable, bg_eff))
 
 
 # Main function call

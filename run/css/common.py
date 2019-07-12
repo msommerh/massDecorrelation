@@ -24,8 +24,9 @@ OMEGA_RANGE = np.linspace(0., 1.0, 2 * 50 + 1, endpoint = True)[1:]
 MASS_BINS = np.linspace(50., 300., 25 + 1, endpoint=True)
 
 TAU21BINS = np.linspace(0., 1., 501, endpoint=True)
-#D2BINS = np.linspace(0., 5., 500 + 1, endpoint=True)
 N2BINS = np.linspace(0, 0.6, 500 + 1, endpoint=True)
+DECDEEPBINS = np.linspace(0., 1., 501, endpoint=True)
+DEEPBINS = np.linspace(0, 1, 500 + 1, endpoint=True)
 
 # Adds the CSS variable to the data (assuming Ginv, F files exist)
 def add_css (jssVar, data):
@@ -69,8 +70,7 @@ def get_css_series (jssVar, data):
         Pandas.Series containing transformed variable.
     """
 
-    #massData = data['m'].as_matrix().flatten()
-    massData = data['fjet_mass'].as_matrix().flatten()
+    massData = data['m'].as_matrix().flatten()
     jssData = data[jssVar].as_matrix().flatten()
     massbins = np.digitize(massData, MASS_BINS)-1
 

@@ -16,20 +16,23 @@ from adversarial.profile import profile
 
 # Common definition(s)
 #VAR  = 'D2'   # 'NN' | Substructure variable to decorrelate
-VARN2  = 'fjet_N2_beta1'
-VARTAU21  = 'fjet_tau21'
-N2EFF  = 15 # corresponding to 50% signal eff with N2
-TAU21EFF  = 15 # corresponding to 50% signal eff with tau21
-#VAR  = 'fjet_tau21_r'
+VAR_N2  = 'N2_B1'
+VAR_TAU21  = 'tau21'
+VAR_DECDEEP = 'decDeepWvsQCD'
+VAR_DEEP = 'DeepWvsQCD'
+N2_EFF  = 15 # corresponding to 50% signal eff with N2
+TAU21_EFF  = 15 # corresponding to 50% signal eff with tau21
+DECDEEP_EFF = 23 # corresponding to 50% signal eff with mass decorrelated deepWvsQCD
+DEEP_EFF = 7 # corresponding to 50% signal eff with deepQvsQCD
 #EFF  = 16     # '95' | Fixed backround efficiency at which to perform decorrelation
 #VARX = 'rho'  # X-axis variable from which to decorrelate
 #VARY = 'pt'   # Y-axis variable from which to decorrelate
-VARX = 'fjet_rho'
-VARY = 'fjet_pt'
+VARX = 'rho'
+VARY = 'pt'
 VARS = [VARX, VARY]
 AXIS = {      # Dict holding (num_bins, axis_min, axis_max) for axis variables
-    'fjet_rho': (20, -7.0, -1.0),
-    'fjet_pt':  (20, 200., 2000.),
+    'rho': (20, -7.0, -1.0),
+    'pt':  (20, 200., 2000.),
 }
 
 #### ________________________________________________________________________
@@ -82,7 +85,7 @@ def standardise (array, y=None):
 
 
 @profile
-def add_knn (data, feat=VARTAU21, newfeat=None, path=None):
+def add_knn (data, feat=VAR_TAU21, newfeat=None, path=None):
     """
     Add kNN-transformed `feat` to `data`. Modifies `data` in-place.
 
@@ -112,9 +115,11 @@ def add_knn (data, feat=VARTAU21, newfeat=None, path=None):
 
 
 @profile
-def fill_profile (data, variable, bg_eff):
+def fill_profile (data, variable, bg_eff, signal_above=False):
     """Fill ROOT.TH2F with the measured, weighted values of the bg_eff-percentile
     of the background `VAR`. """
+
+    if signal_above: bg_eff = 100. - bg_eff  # ensures that region above cut is counted as signal, not below
 
     # Define arrays
     shape   = (AXIS[VARX][0], AXIS[VARY][0])

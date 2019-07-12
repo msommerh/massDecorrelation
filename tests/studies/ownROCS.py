@@ -60,7 +60,7 @@ def Make_Binned_ROC_histograms(title, DDT, kNN, pT, bins, sample_weights=None):
                 hist.Write()
         print "saved histograms in ROC_doublechecks/{}_ROC_histograms.root".format(title)
 
-def Make_Binned_ROC_Curves(title,Signal_title,Background_title,bins,log=False, cut_below=False):
+def Make_Binned_ROC_Curves(title,Signal_title,Background_title,bins,log=False, cut_below=False, bg_eff_representation=False):
         """accesses the files made by ANN_Make_Binned_ROC_histograms() directly to produce a ROC curve for ANN and CSV in the desired pT-bins. A log representation can be turned on"""
         if len(bins)<=6:
                 color = ['red','green','blue','orange','brown']
@@ -92,21 +92,34 @@ def Make_Binned_ROC_Curves(title,Signal_title,Background_title,bins,log=False, c
         	kNN_Signal_Eff = kNN_Signal_Eff[indices]
         	kNN_BG_Eff = kNN_BG_Eff[indices]
 
-                if log:
-                        plt.semilogy(DDT_Signal_Eff,np.power(DDT_BG_Eff,-1), color = color[bin_], linestyle = '-',label="DDT_"+str(bins[bin_])+"_"+str(bins[bin_+1]))
-                        plt.semilogy(kNN_Signal_Eff,np.power(kNN_BG_Eff,-1), color = color[bin_+1],linestyle = '-',label="kNN_"+str(bins[bin_])+"_"+str(bins[bin_+1]))
 
-                else:
-                        plt.plot(DDT_Signal_Eff,np.power(DDT_BG_Eff,-1), color = color[bin_], linestyle = '-',label="DDT_"+str(bins[bin_])+"_"+str(bins[bin_+1]))
-                        plt.plot(kNN_Signal_Eff,np.power(kNN_BG_Eff,-1), color = color[bin_+1],linestyle = '-',label="DDT_"+str(bins[bin_])+"_"+str(bins[bin_+1]))
+		if bg_eff_representation:
+                	if log:
+                	        plt.semilogy(DDT_Signal_Eff,DDT_BG_Eff, color = color[bin_], linestyle = '-',label="DDT_"+str(bins[bin_])+"_"+str(bins[bin_+1]))
+                	        plt.semilogy(kNN_Signal_Eff,kNN_BG_Eff, color = color[bin_+1],linestyle = '-',label="kNN_"+str(bins[bin_])+"_"+str(bins[bin_+1]))
+
+                	else:
+                	        plt.plot(DDT_Signal_Eff,DDT_BG_Eff, color = color[bin_], linestyle = '-',label="DDT_"+str(bins[bin_])+"_"+str(bins[bin_+1]))
+                	        plt.plot(kNN_Signal_Eff,kNN_BG_Eff, color = color[bin_+1],linestyle = '-',label="DDT_"+str(bins[bin_])+"_"+str(bins[bin_+1]))
+			plt.ylabel(r"$\epsilon$_background")
+			plt.ylim(0., 1.)
+
+		else:
+                	if log:
+                	        plt.semilogy(DDT_Signal_Eff,np.power(DDT_BG_Eff,-1), color = color[bin_], linestyle = '-',label="DDT_"+str(bins[bin_])+"_"+str(bins[bin_+1]))
+                	        plt.semilogy(kNN_Signal_Eff,np.power(kNN_BG_Eff,-1), color = color[bin_+1],linestyle = '-',label="kNN_"+str(bins[bin_])+"_"+str(bins[bin_+1]))
+
+                	else:
+                	        plt.plot(DDT_Signal_Eff,np.power(DDT_BG_Eff,-1), color = color[bin_], linestyle = '-',label="DDT_"+str(bins[bin_])+"_"+str(bins[bin_+1]))
+                	        plt.plot(kNN_Signal_Eff,np.power(kNN_BG_Eff,-1), color = color[bin_+1],linestyle = '-',label="DDT_"+str(bins[bin_])+"_"+str(bins[bin_+1]))
+			plt.ylabel(r"1/$\epsilon$_background")
+			plt.ylim(1, 1e3)
 	
 	plt.xlabel(r"$\epsilon$_signal")
-	plt.ylabel(r"1/$\epsilon$_background")
 	plt.xlim(0.2, 1.)
-	plt.ylim(1, 1e3)
 	plt.legend(loc=1)
 	plt.savefig("ROC_doublechecks/{}_ROC_Curves.png".format(title))
         print "saved as ROC_doublechecks/{}_ROC_Curves.png".format(title)
 
 if __name__ == "__main__":
-	Make_Binned_ROC_Curves("full_spectrum", "full_signal", "full_bg", [200,2000],log=True, cut_below=True)
+	Make_Binned_ROC_Curves("full_spectrum", "full_signal", "full_bg", [200,2000],log=True, cut_below=True, bg_eff_representation)

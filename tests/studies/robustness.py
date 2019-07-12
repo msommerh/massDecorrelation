@@ -18,13 +18,21 @@ import rootplotting as rp
 
 
 #@showsave
-def robustness_full (data, args, features, masscut=False, num_bootstrap=5):
+def robustness_full (data, args, feature_dict, masscut=False, num_bootstrap=5, title=None):
+
+    # Extract features and count appearance of each base variable
+    features = []
+    appearances = []
+    for basevar in feature_dict.keys():
+        for suffix in feature_dict[basevar]:
+            features.append(basevar+suffix)
+        appearances.append(len(feature_dict[basevar]))
 
     # Compute relevant quantities
     bins, effs, rejs, jsds, meanx, jsd_limits = dict(), dict(), dict(), dict(), dict(), dict()
 
     # -- pt
-    var = 'fjet_pt'
+    var = 'pt'
     bins[var] = [200, 260, 330, 430, 560, 720, 930, 1200, 1550, 2000]
     effs[var], rejs[var], jsds[var], meanx[var], jsd_limits[var] = compute(data, args, features, var, bins[var], masscut, num_bootstrap)
 
@@ -35,11 +43,14 @@ def robustness_full (data, args, features, masscut=False, num_bootstrap=5):
     effs[var], rejs[var], jsds[var], meanx[var], jsd_limits[var] = compute(data, args, features, var, bins[var], masscut, num_bootstrap)
 
     # Perform plotting
-    c = plot_full(data, args, features, bins, effs, rejs, jsds, meanx, jsd_limits, masscut)
-    plot_individual(data, args, features, bins, effs, rejs, jsds, meanx, jsd_limits, masscut)
+    c = plot_full(data, args, features, bins, effs, rejs, jsds, meanx, jsd_limits, masscut, appearances)
+    plot_individual(data, args, features, bins, effs, rejs, jsds, meanx, jsd_limits, masscut, title, appearances)
 
     # Output
-    path = 'figures/robustness{}.pdf'.format('_masscut' if masscut else '')
+    if title is None:
+    	path = 'figures/robustness{}.pdf'.format('_masscut' if masscut else '')
+    else:
+	path = 'figures/'+title+'_robustness{}.pdf'.format('_masscut' if masscut else '')
 
     c.save(path = path)
     return c, args, path
@@ -48,7 +59,7 @@ def robustness_full (data, args, features, masscut=False, num_bootstrap=5):
 
 
 #@showsave
-def robustness (data, args, features, var, bins, masscut=False, num_bootstrap=5):
+def robustness (data, args, features, var, bins, masscut=False, num_bootstrap=5, title=None):
     """
     Perform study of robustness wrt. `var`.
 
@@ -63,15 +74,26 @@ def robustness (data, args, features, var, bins, masscut=False, num_bootstrap=5)
         masscut: ...
         num_bootstrap: ...
     """
+    # Extract features and count appearance of each base variable
+    features = []
+    appearances = []
+    for basevar in feature_dict.keys():
+        for suffix in feature_dict[basevar]:
+            features.append(basevar+suffix)
+        appearances.append(len(feature_dict[basevar]))
+
 
     # Compute relevant quantities
     effs, rejs, jsds, meanx, jsd_limits = compute(data, args, features, var, bins, masscut, num_bootstrap)
 
     # Perform plotting
-    c = plot(data, args, features, bins, effs, rejs, jsds, meanx, jsd_limits, masscut, var)
+    c = plot(data, args, features, bins, effs, rejs, jsds, meanx, jsd_limits, masscut, var, appearances)
 
     # Output
-    path = 'figures/robustness_{}{}.pdf'.format(var, '_masscut' if masscut else '')
+    if title is None:
+    	path = 'figures/robustness_{}{}.pdf'.format(var, '_masscut' if masscut else '')
+    else:
+	path = 'figures/'+title+'_robustness_{}{}.pdf'.format(var, '_masscut' if masscut else '')
 
     c.save(path = path)
     return c, args, path
@@ -133,7 +155,7 @@ def plot_full (*argv):
     """
 
     # Unpack arguments
-    data, args, features, bins, effs, rejs, jsds, meanx, jsd_limits, masscut = argv
+    data, args, features, bins, effs, rejs, jsds, meanx, jsd_limits, masscut, appearances = argv
 
     with TemporaryStyle() as style:
 
@@ -184,54 +206,59 @@ def plot_full (*argv):
         # Plots
         # -- References
         boxopts  = dict(fillcolor=ROOT.kBlack, alpha=0.05, linecolor=ROOT.kGray + 2, linewidth=1, option='HIST')
-        c.pads()[0].hist([2], bins=[bins['fjet_pt'] [0], bins['fjet_pt'] [-1]], **boxopts)
+        c.pads()[0].hist([2], bins=[bins['pt'] [0], bins['pt'] [-1]], **boxopts)
         c.pads()[1].hist([2], bins=[bins['npv'][0], bins['npv'][-1]], **boxopts)
-        c.pads()[2].hist([1], bins=[bins['fjet_pt'] [0], bins['fjet_pt'] [-1]], **boxopts)
+        c.pads()[2].hist([1], bins=[bins['pt'] [0], bins['pt'] [-1]], **boxopts)
         c.pads()[3].hist([1], bins=[bins['npv'][0], bins['npv'][-1]], **boxopts)
 
         nb_col = 2
-        for col, var in enumerate(['fjet_pt', 'npv']):
+        for col, var in enumerate(['pt', 'npv']):
             for is_simple in [True, False]:
-                for ifeat, feat in filter(lambda t: is_simple == signal_low(t[1]), enumerate(features)):
+		indices = np.array([0]+appearances).cumsum()
+		for i in range(len(indices)-1):
+                    for ifeat, feat in filter(lambda t: is_simple == signal_low(t[1]), enumerate(features[indices[i]:indices[i+1]])):
 
-                    opts = dict(
-                        linecolor   = rp.colours[(ifeat // 2)],
-                        markercolor = rp.colours[(ifeat // 2)],
-                        fillcolor   = rp.colours[(ifeat // 2)],
-                        linestyle   = 1 + (ifeat % 2),
-                        alpha       = 0.3,
-                        option      = 'E2',
-                    )
+                        opts = dict(
+                            linecolor   = rp.colours[i % len(rp.colours)],
+                            markercolor = rp.colours[i % len(rp.colours)],
+                            fillcolor   = rp.colours[i % len(rp.colours)],
+                            linestyle   = 1 + ifeat,
+                            alpha       = 0.3,
+                            option      = 'E2',
+                        )
 
-                    mean_rej, std_rej = map(np.array, zip(*rejs[var][feat]))  # @TEMP
-                    mean_jsd, std_jsd = map(np.array, zip(*jsds[var][feat]))
+                        mean_rej, std_rej = map(np.array, zip(*rejs[var][feat]))  # @TEMP
+                        mean_jsd, std_jsd = map(np.array, zip(*jsds[var][feat]))
 
-                    # Only _show_ mass-decorrelated features for `npv`
-                    if (col == 1) and (ifeat % 2 == 0):
-                        mean_rej *= -9999.
-                        mean_jsd *= -9999.
+                        ## Only _show_ mass-decorrelated features for `npv`
+                        #if (col == 1) and (ifeat % 2 == 0):
+                        #    mean_rej *= -9999.
+                        #    mean_jsd *= -9999.
+                        #    pass
+
+                        # Error boxes
+                        x    = np.array(bins[var][:-1]) + 0.5 * np.diff(bins[var])
+                        xerr = 0.5 * np.diff(bins[var])
+                        graph_rej = ROOT.TGraphErrors(len(x), x, mean_rej, xerr, std_rej)
+                        graph_jsd = ROOT.TGraphErrors(len(x), x, mean_jsd, xerr, std_jsd)
+
+                        c.pads()[col + 0 * nb_col].hist(graph_rej, **opts)
+                        c.pads()[col + 1 * nb_col].hist(graph_jsd, **opts)
+
+                        # Markers and lines
+                        opts['option']      = 'PE2L'
+		        if ifeat == 0:
+		            opts['markerstyle'] = 20
+		        else:
+		            opts['markerstyle'] = 23 + ifeat
+
+                        graph_rej = ROOT.TGraph(len(x), meanx[var], mean_rej)
+                        graph_jsd = ROOT.TGraph(len(x), meanx[var], mean_jsd)
+
+                        c.pads()[col + 0 * nb_col].hist(graph_rej, label=latex(feat, ROOT=True) if not is_simple else None, **opts)
+                        c.pads()[col + 1 * nb_col].hist(graph_jsd, label=latex(feat, ROOT=True) if     is_simple else None, **opts)
                         pass
-
-                    # Error boxes
-                    x    = np.array(bins[var][:-1]) + 0.5 * np.diff(bins[var])
-                    xerr = 0.5 * np.diff(bins[var])
-                    graph_rej = ROOT.TGraphErrors(len(x), x, mean_rej, xerr, std_rej)
-                    graph_jsd = ROOT.TGraphErrors(len(x), x, mean_jsd, xerr, std_jsd)
-
-                    c.pads()[col + 0 * nb_col].hist(graph_rej, **opts)
-                    c.pads()[col + 1 * nb_col].hist(graph_jsd, **opts)
-
-                    # Markers and lines
-                    opts['option']      = 'PE2L'
-                    opts['markerstyle'] = 20 + 4 * (ifeat % 2)
-
-                    graph_rej = ROOT.TGraph(len(x), meanx[var], mean_rej)
-                    graph_jsd = ROOT.TGraph(len(x), meanx[var], mean_jsd)
-
-                    c.pads()[col + 0 * nb_col].hist(graph_rej, label=latex(feat, ROOT=True) if not is_simple else None, **opts)
-                    c.pads()[col + 1 * nb_col].hist(graph_jsd, label=latex(feat, ROOT=True) if     is_simple else None, **opts)
                     pass
-                pass
 
             # Meaningful limits on JSD
             x, y, ey_stat, ey_syst  = map(np.array, zip(*jsd_limits[var]))
@@ -271,7 +298,7 @@ def plot_full (*argv):
             c.pads()[3]._yaxis().SetTitleOffset(9999.)
 
             # -- x-axis label
-            if   var == 'fjet_pt':
+            if   var == 'pt':
                 xlabel = "Large-#it{R} jet p_{T} [GeV]"
             elif var == 'npv':
                 xlabel = "Number of reconstructed vertices N_{PV}"
@@ -289,7 +316,8 @@ def plot_full (*argv):
             c.pads()[col + 0 * nb_col].latex("Random guessing",   xmid, 2 * 0.9, align=23, textsize=11 * scale, angle=0, textcolor=ROOT.kGray + 2)
             c.pads()[col + 1 * nb_col].latex("Maximal sculpting", xmid, 1 * 0.8, align=23, textsize=11 * scale, angle=0, textcolor=ROOT.kGray + 2)
 
-            c.pads()[col + 0 * nb_col].ylim(1,   70)  # 500
+            #c.pads()[col + 0 * nb_col].ylim(1,   70)  # 500
+	    c.pads()[col + 0 * nb_col].ylim(1,   150)  # extending the y axis range since the DeepWvsWCD tagger didnt fit
             c.pads()[col + 1 * nb_col].ylim(0.2, 7E+04)  # 2E+05
 
             c.pads()[col + 0 * nb_col].logy()
@@ -340,13 +368,13 @@ def plot_individual (*argv):
     """
 
     # Unpack arguments
-    data, args, features, bins, effs, rejs, jsds, meanx, jsd_limits, masscut = argv
+    data, args, features, bins, effs, rejs, jsds, meanx, jsd_limits, masscut, title, appearances = argv
 
     # To fix 30.5 --> 30 for NPV
     bins['npv'][-1] = np.floor(bins['npv'][-1])
 
     # Loop combinations
-    for var, metric in itertools.product(['fjet_pt', 'npv', None], ['rej', 'jsd']):
+    for var, metric in itertools.product(['pt', 'npv', None], ['rej', 'jsd']):
 
         with TemporaryStyle() as style:
 
@@ -385,52 +413,58 @@ def plot_individual (*argv):
                 c.hist([2 if metric == 'rej' else 1], bins=[bins[var] [0], bins[var] [-1]], **boxopts)
 
                 for is_simple in [True, False]:
-                    for ifeat, feat in filter(lambda t: is_simple == signal_low(t[1]), enumerate(features)):
+		    indices = np.array([0]+appearances).cumsum()
+		    for i in range(len(indices)-1):
+                        for ifeat, feat in filter(lambda t: is_simple == signal_low(t[1]), enumerate(features[indices[i]:indices[i+1]])):
 
-                        opts = dict(
-                            linecolor   = rp.colours[(ifeat // 2)],
-                            markercolor = rp.colours[(ifeat // 2)],
-                            fillcolor   = rp.colours[(ifeat // 2)],
-                            linestyle   = 1 + (ifeat % 2),
-                            alpha       = 0.3,
-                            option      = 'E2',
-                        )
+                            opts = dict(
+                                linecolor   = rp.colours[i % len(rp.colours)],
+                                markercolor = rp.colours[i % len(rp.colours)],
+                                fillcolor   = rp.colours[i % len(rp.colours)],
+                                linestyle   = 1 + ifeat,
+                                alpha       = 0.3,
+                                option      = 'E2',
+                            )
 
-                        mean_rej, std_rej = map(np.array, zip(*rejs[var][feat]))  # @TEMP
-                        mean_jsd, std_jsd = map(np.array, zip(*jsds[var][feat]))
+                            mean_rej, std_rej = map(np.array, zip(*rejs[var][feat]))  # @TEMP
+                            mean_jsd, std_jsd = map(np.array, zip(*jsds[var][feat]))
 
-                        # Only _show_ mass-decorrelated features for `npv`
-                        if (var == 'npv') and (ifeat % 2 == 0):
-                            mean_rej *= -9999.
-                            mean_jsd *= -9999.
+                            # Only _show_ mass-decorrelated features for `npv`
+                            if (var == 'npv') and (ifeat % 2 == 0):
+                                mean_rej *= -9999.
+                                mean_jsd *= -9999.
+                                pass
+
+                            # Error boxes
+                            x    = np.array(bins[var][:-1]) + 0.5 * np.diff(bins[var])
+                            xerr = 0.5 * np.diff(bins[var])
+                            graph_rej = ROOT.TGraphErrors(len(x), x, mean_rej, xerr, std_rej)
+                            graph_jsd = ROOT.TGraphErrors(len(x), x, mean_jsd, xerr, std_jsd)
+
+                            if metric == 'rej':
+                                c.hist(graph_rej, **opts)
+                            else:
+                                c.hist(graph_jsd, **opts)
+                                pass
+
+                            # Markers and lines
+                            opts['option']      = 'PE2L'
+                           
+			    if ifeat == 0:
+			        opts['markerstyle'] = 20
+			    else:
+				opts['markerstyle'] = 23 + ifeat
+
+                            graph_rej = ROOT.TGraph(len(x), meanx[var], mean_rej)
+                            graph_jsd = ROOT.TGraph(len(x), meanx[var], mean_jsd)
+
+                            if metric == 'rej':
+                                c.hist(graph_rej, label=latex(feat, ROOT=True) if not is_simple else None, **opts)
+                            else:
+                                c.hist(graph_jsd, label=latex(feat, ROOT=True) if     is_simple else None, **opts)
+                                pass
                             pass
-
-                        # Error boxes
-                        x    = np.array(bins[var][:-1]) + 0.5 * np.diff(bins[var])
-                        xerr = 0.5 * np.diff(bins[var])
-                        graph_rej = ROOT.TGraphErrors(len(x), x, mean_rej, xerr, std_rej)
-                        graph_jsd = ROOT.TGraphErrors(len(x), x, mean_jsd, xerr, std_jsd)
-
-                        if metric == 'rej':
-                            c.hist(graph_rej, **opts)
-                        else:
-                            c.hist(graph_jsd, **opts)
-                            pass
-
-                        # Markers and lines
-                        opts['option']      = 'PE2L'
-                        opts['markerstyle'] = 20 + 4 * (ifeat % 2)
-
-                        graph_rej = ROOT.TGraph(len(x), meanx[var], mean_rej)
-                        graph_jsd = ROOT.TGraph(len(x), meanx[var], mean_jsd)
-
-                        if metric == 'rej':
-                            c.hist(graph_rej, label=latex(feat, ROOT=True) if not is_simple else None, **opts)
-                        else:
-                            c.hist(graph_jsd, label=latex(feat, ROOT=True) if     is_simple else None, **opts)
-                            pass
-                        pass
-                    pass   # end loop: `is_simple`
+                        pass   # end loop: `is_simple`
 
                 # Meaningful limits on JSD
                 if metric == 'jsd':
@@ -447,11 +481,11 @@ def plot_individual (*argv):
                     c.graph(gr_stat, linestyle=2, linecolor=ROOT.kGray + 1, fillcolor=ROOT.kBlack, alpha=0.03, option='L3')
 
                     x_, y_, ex_, ey_ = ROOT.Double(0), ROOT.Double(0), ROOT.Double(0), ROOT.Double(0)
-                    idx = (gr_comb.GetN() - 1) if var == 'fjet_pt' else (gr_comb.GetN() // 2)
+                    idx = (gr_comb.GetN() - 1) if var == 'pt' else (gr_comb.GetN() // 2)
                     gr_comb.GetPoint(idx, x_,  y_)
                     ey_ = gr_comb.GetErrorY(idx)
                     x_, y_ = map(float, (x_, y_))
-                    if var == 'fjet_pt':
+                    if var == 'pt':
                         c.latex("Mean stat. #oplus #varepsilon_{bkg}^{rel} var. limit     ", x_, y_ - 1.0 * ey_, align=31, textsize=11 * scale, angle=0, textcolor=ROOT.kGray + 2)
                         pass
                     pass
@@ -461,7 +495,7 @@ def plot_individual (*argv):
                 #c.pads()[2]._xaxis().SetTitleOffset(2.3)
 
                 # -- x-axis label
-                if   var == 'fjet_pt':
+                if   var == 'pt':
                     xlabel = "Large-#it{R} jet p_{T} [GeV]"
                 elif var == 'npv':
                     xlabel = "Number of reconstructed vertices N_{PV}"
@@ -499,7 +533,7 @@ def plot_individual (*argv):
                 c.text( ["#sqrt{s} = 13 TeV,  #it{W} jet tagging"] + \
                        (['m #in  [60, 100] GeV'] if masscut else []) + \
                        (['Multijets'] if metric == 'jsd' else []),
-                       ATLAS=False, ymax=0.40 if (masscut and (var == 'fjet_pt') and (metric == 'rej')) else None)
+                       ATLAS=False, ymax=0.40 if (masscut and (var == 'pt') and (metric == 'rej')) else None)
                        #, ymax=1. - margin_vert - 0.10)
 
             else:
@@ -517,7 +551,10 @@ def plot_individual (*argv):
                             option      = 'E2',
                         )
                         opts['option']      = 'PE2L'
-                        opts['markerstyle'] = 20 + 4 * (ifeat % 2)
+		        if ifeat == 0:
+		            opts['markerstyle'] = 20
+		        else:
+		            opts['markerstyle'] = 23 + ifeat
 
                         label = latex(feat, ROOT=True) if is_simple == (metric == 'jsd') else None
                         h = c.hist([0.5], bins=[0,1], label=label, **opts)
@@ -566,7 +603,10 @@ def plot_individual (*argv):
             '''
 
             # Save
-            c.save('figures/robustness__{}_{}{}.pdf'.format(var if var is not None else 'legend', metric if var is not None else ('mva' if metric == 'rej' else 'analytical'), '_masscut' if masscut else ''))
+	    if title is None:
+		c.save('figures/robustness__{}_{}{}.pdf'.format(var if var is not None else 'legend', metric if var is not None else ('mva' if metric == 'rej' else 'analytical'), '_masscut' if masscut else ''))
+	    else:
+            	c.save('figures/'+title+'_robustness__{}_{}{}.pdf'.format(var if var is not None else 'legend', metric if var is not None else ('mva' if metric == 'rej' else 'analytical'), '_masscut' if masscut else ''))
 
             pass  # Temporary style scope
 
@@ -580,7 +620,7 @@ def plot (*argv):
     """
 
     # Unpack arguments
-    data, args, features, bins, effs, rejs, jsds, meanx, jsd_limits, masscut, var = argv
+    data, args, features, bins, effs, rejs, jsds, meanx, jsd_limits, masscut, var, appearances = argv
 
     with TemporaryStyle() as style:
 
@@ -609,42 +649,48 @@ def plot (*argv):
 
 
         for is_simple in [True, False]:
-            for ifeat, feat in filter(lambda t: is_simple == signal_low(t[1]), enumerate(features)):
 
-                opts = dict(
-                    linecolor   = rp.colours[(ifeat // 2)],
-                    markercolor = rp.colours[(ifeat // 2)],
-                    fillcolor   = rp.colours[(ifeat // 2)],
-                    linestyle   = 1 + (ifeat % 2),
-                    alpha       = 0.3,
-                    option      = 'E2',
-                )
+	    indices = np.array([0]+appearances).cumsum()
+	    for i in range(len(indices)-1):
+                for ifeat, feat in filter(lambda t: is_simple == signal_low(t[1]), enumerate(features[indices[i]:indices[i+1]])):
 
-                mean_rej, std_rej = map(np.array, zip(*rejs[feat]))  # @TEMP
-                #mean_rej, std_rej = map(np.array, zip(*effs[feat]))  # @TEMP
-                mean_jsd, std_jsd = map(np.array, zip(*jsds[feat]))
+                    opts = dict(
+                        linecolor   = rp.colours[i % len(rp.colours)],
+                        markercolor = rp.colours[i % len(rp.colours)],
+                        fillcolor   = rp.colours[i % len(rp.colours)],
+                        linestyle   = 1 + ifeat,
+                        alpha       = 0.3,
+                        option      = 'E2',
+                    )
 
-                # Error boxes
-                x    = np.array(bins[:-1]) + 0.5 * np.diff(bins)
-                xerr = 0.5 * np.diff(bins)
-                graph_rej = ROOT.TGraphErrors(len(x), x, mean_rej, xerr, std_rej)
-                graph_jsd = ROOT.TGraphErrors(len(x), x, mean_jsd, xerr, std_jsd)
+                    mean_rej, std_rej = map(np.array, zip(*rejs[feat]))  # @TEMP
+                    #mean_rej, std_rej = map(np.array, zip(*effs[feat]))  # @TEMP
+                    mean_jsd, std_jsd = map(np.array, zip(*jsds[feat]))
 
-                c.pads()[0].hist(graph_rej, **opts)
-                c.pads()[1].hist(graph_jsd, **opts)
+                    # Error boxes
+                    x    = np.array(bins[:-1]) + 0.5 * np.diff(bins)
+                    xerr = 0.5 * np.diff(bins)
+                    graph_rej = ROOT.TGraphErrors(len(x), x, mean_rej, xerr, std_rej)
+                    graph_jsd = ROOT.TGraphErrors(len(x), x, mean_jsd, xerr, std_jsd)
 
-                # Markers and lines
-                opts['option']      = 'PE2L'
-                opts['markerstyle'] = 20 + 4 * (ifeat % 2)
+                    c.pads()[0].hist(graph_rej, **opts)
+                    c.pads()[1].hist(graph_jsd, **opts)
 
-                graph_rej = ROOT.TGraph(len(x), meanx, mean_rej)
-                graph_jsd = ROOT.TGraph(len(x), meanx, mean_jsd)
+                    # Markers and lines
+                    opts['option']      = 'PE2L'
+		    if ifeat == 0:
+		        opts['markerstyle'] = 20
+		    else:
+		        opts['markerstyle'] = 23 + ifeat
 
-                c.pads()[0].hist(graph_rej, label=latex(feat, ROOT=True) if not is_simple else None, **opts)
-                c.pads()[1].hist(graph_jsd, label=latex(feat, ROOT=True) if     is_simple else None, **opts)
+                    graph_rej = ROOT.TGraph(len(x), meanx, mean_rej)
+                    graph_jsd = ROOT.TGraph(len(x), meanx, mean_jsd)
+
+                    c.pads()[0].hist(graph_rej, label=latex(feat, ROOT=True) if not is_simple else None, **opts)
+                    c.pads()[1].hist(graph_jsd, label=latex(feat, ROOT=True) if     is_simple else None, **opts)
+                    pass
+
                 pass
-
-            pass
 
         # Draw class-specific legend
         width = 0.20
@@ -677,7 +723,7 @@ def plot (*argv):
             pass
 
         # -- x-axis label
-        if var == 'fjet_pt':
+        if var == 'pt':
             xlabel = "Large-#it{R} jet p_{T} [GeV]"
         elif var == 'npv':
             xlabel = "Number of reconstructed vertices N_{PV}"

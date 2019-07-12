@@ -36,12 +36,21 @@ def main (args):
     data, _, _ = load_data(args.input + 'data.h5', test_full_signal=True)
 
     #variable = VAR_TAU21
-    variable = VAR_N2
+    #variable = VAR_N2
+    variable = VAR_DECDEEP
+    #variable = VAR_DEEP
 
     if variable == VAR_N2:
         fit_range = FIT_RANGE_N2
-    else:
+    elif variable == VAR_TAU21:
         fit_range = FIT_RANGE_TAU21
+    elif variable == VAR_DECDEEP:
+	fit_range = FIT_RANGE_DECDEEP
+    elif variable == VAR_DEEP:
+	fit_range = FIT_RANGE_DEEP
+    else:
+	print "invalid variable"
+	return 0
 
     # Add DDT variable
     add_ddt(data, feat=variable, path='models/ddt/ddt_{}.pkl.gz'.format(variable))
@@ -142,7 +151,6 @@ def plot1D (*argv):
 
     # Unpack arguments
     graphs, ddt, arr_x, variable, fit_range = argv
-    assert variable == VAR_TAU21 or variable == VAR_N2
 
     # Style
     ROOT.gStyle.SetTitleOffset(1.4, 'x')
@@ -161,8 +169,15 @@ def plot1D (*argv):
     	c.graph(graphs[variable],         label="Original, #tau_{21}",          linecolor=rp.colours[4], markercolor=rp.colours[4], markerstyle=24, legend_option='PE')
     	c.graph(graphs[variable + 'DDT'], label="Transformed, #tau_{21}^{DDT}", linecolor=rp.colours[1], markercolor=rp.colours[1], markerstyle=20, legend_option='PE')
     elif variable == VAR_N2:
-    	c.graph(graphs[variable],         label="Original, #N_{2}",          linecolor=rp.colours[4], markercolor=rp.colours[4], markerstyle=24, legend_option='PE')
-    	c.graph(graphs[variable + 'DDT'], label="Transformed, #N_{2}^{DDT}", linecolor=rp.colours[1], markercolor=rp.colours[1], markerstyle=20, legend_option='PE')
+    	c.graph(graphs[variable],         label="Original, N_{2}",          linecolor=rp.colours[4], markercolor=rp.colours[4], markerstyle=24, legend_option='PE')
+    	c.graph(graphs[variable + 'DDT'], label="Transformed, N_{2}^{DDT}", linecolor=rp.colours[1], markercolor=rp.colours[1], markerstyle=20, legend_option='PE')
+    elif variable == VAR_DECDEEP:
+    	c.graph(graphs[variable],         label="Original, dec_deepWvsQCD",          linecolor=rp.colours[4], markercolor=rp.colours[4], markerstyle=24, legend_option='PE')
+    	c.graph(graphs[variable + 'DDT'], label="Transformed, dec_deepWvsQCD^{DDT}", linecolor=rp.colours[1], markercolor=rp.colours[1], markerstyle=20, legend_option='PE')
+    elif variable == VAR_DEEP:
+    	c.graph(graphs[variable],         label="Original, deepWvsQCD",          linecolor=rp.colours[4], markercolor=rp.colours[4], markerstyle=24, legend_option='PE')
+    	c.graph(graphs[variable + 'DDT'], label="Transformed, deepWvsQCD^{DDT}", linecolor=rp.colours[1], markercolor=rp.colours[1], markerstyle=20, legend_option='PE')
+
 
     # Fit
     x1, x2 = min(arr_x), max(arr_x)
@@ -177,6 +192,10 @@ def plot1D (*argv):
         c.ylabel("#LT#tau_{21}#GT, #LT#tau_{21}^{DDT}#GT")
     elif variable == VAR_N2:
 	c.ylabel("#LTN_{2}#GT, #LTN_{2}^{DDT}#GT")
+    elif variable == VAR_DECDEEP:
+	c.ylabel("#LTdec_deepWvsQCD#GT, #LTdec_deepWvsQCD^{DDT}#GT")
+    elif variable == VAR_DEEP:
+	c.ylabel("#LTdeepWvsQCD#GT, #LTdeepWvsQCD^{DDT}#GT")
 
     c.text(["#sqrt{s} = 13 TeV,  Multijets"], qualifier=QUALIFIER, ATLAS=False)
     c.legend(width=0.25, xmin=0.57, ymax=None if "Internal" in QUALIFIER else 0.85)
@@ -207,7 +226,6 @@ def plot2D (*argv):
 
     # Unpack arguments
     data, ddt, lda, contours, binsx, binsy, variable = argv
-    assert variable == VAR_TAU21 or variable == VAR_N2
 
     with TemporaryStyle() as style:
 
@@ -243,9 +261,13 @@ def plot2D (*argv):
         c.ylim(binsy[0], binsy[-1])
         c.xlabel("Large-#it{R} jet " + latex('rhoDDT', ROOT=True))
 	if variable == VAR_TAU21:
-        	c.ylabel("Large-#it{R} jet " + latex('Tau21',  ROOT=True))
+        	c.ylabel("Large-#it{R} jet " + latex('#tau_{21}',  ROOT=True)) #changed these to latex formatting
 	elif variable == VAR_N2:
-		c.ylabel("Large-#it{R} jet " + latex('N2',  ROOT=True))
+		c.ylabel("Large-#it{R} jet " + latex('N_{2}',  ROOT=True))
+	elif variable == VAR_DECDEEP:
+		c.ylabel("Large-#it{R} jet " + latex('dec_deepWvsQCD',  ROOT=True))
+	elif variable == VAR_DEEP:
+		c.ylabel("Large-#it{R} jet " + latex('deepWvsQCD',  ROOT=True))
 
         # Save
         mkdir('figures/ddt')

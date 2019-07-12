@@ -20,7 +20,7 @@ HISTSTYLE[False]['label'] = "Multijets"
 
 @garbage_collect
 #@showsave
-def distribution (data_, args, feat, pt_range, mass_range):
+def distribution (data_, args, feat, pt_range, mass_range, title=None):
     """
     Perform study of substructure variable distributions.
 
@@ -34,13 +34,13 @@ def distribution (data_, args, feat, pt_range, mass_range):
 
     # Select data
     if pt_range is not None:
-        data = data_[(data_['fjet_pt'] > pt_range[0]) & (data_['fjet_pt'] < pt_range[1])]
+        data = data_[(data_['pt'] > pt_range[0]) & (data_['pt'] < pt_range[1])]
     else:
         data = data_
         pass
 
     if mass_range is not None:
-        data = data[(data['fjet_mass'] > mass_range[0]) & (data['fjet_mass'] < mass_range[1])]
+        data = data[(data['m'] > mass_range[0]) & (data['m'] < mass_range[1])]
         pass
 
     # Define bins
@@ -53,7 +53,7 @@ def distribution (data_, args, feat, pt_range, mass_range):
     elif feat.lower().startswith('d2'):
         print "distribution: D2  feature '{}'".format(feat)
         xmin, xmax =  0.,  3.
-    elif 'fjet_tau21' in feat.lower():
+    elif 'tau21' in feat.lower():
         xmin, xmax =  0.,  1.
         pass
 

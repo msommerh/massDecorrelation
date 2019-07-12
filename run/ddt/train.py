@@ -32,17 +32,26 @@ def main (args):
     # Load data
     data, features, _ = load_data(args.input + 'data.h5', train=True, background=True)
 
-    variable = VAR_TAU21
+    #variable = VAR_TAU21
     #variable = VAR_N2
+    #variable = VAR_DECDEEP
+    variable = VAR_DEEP
 
-    # Fill Tau21 profile
+    # Fill variable profile
     profile = fill_profile(data, variable)
 
     # Fit profile
     if variable == VAR_N2:
 	fit_range = FIT_RANGE_N2
-    else:
+    elif variable == VAR_TAU21:
 	fit_range = FIT_RANGE_TAU21
+    elif variable == VAR_DECDEEP:
+	fit_range = FIT_RANGE_DECDEEP
+    elif variable == VAR_DEEP:
+	fit_range = FIT_RANGE_DEEP
+    else:
+	print "variable invalid"
+	return 0
     fit = ROOT.TF1('fit', 'pol1', *fit_range)
     profile.Fit('fit', 'RQ0')
     intercept_val, coef_val = fit.GetParameter(0), fit.GetParameter(1)

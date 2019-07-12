@@ -17,7 +17,7 @@ import rootplotting as rp
 
 
 #@showsave
-def summary (data_, args, feature_dict, scan_features, target_tpr=0.5, num_bootstrap=5, masscut=False, pt_range=(200, 2000), title=None):
+def summary (data_, args, features, scan_features, target_tpr=0.5, num_bootstrap=5, masscut=False, pt_range=(200, 2000), title=None):
     """
     Perform study of combined classification- and decorrelation performance.
 
@@ -41,14 +41,6 @@ def summary (data_, args, feature_dict, scan_features, target_tpr=0.5, num_boots
         num_bootstrap: ...
     """
 
-    # Extract features and count appearance of each base variable
-    features = []
-    appearances = []
-    for basevar in feature_dict.keys():
-        for suffix in feature_dict[basevar]:
-            features.append(basevar+suffix)
-        appearances.append(len(feature_dict[basevar]))
-
     # Check(s)
     assert isinstance(features, list)
     assert isinstance(scan_features, dict)
@@ -65,8 +57,7 @@ def summary (data_, args, feature_dict, scan_features, target_tpr=0.5, num_boots
 
     # Compute metrics for all features
     points = list()
-    #for feat in features + map(lambda t: t[0], [it for gr in scan_features.itervalues() for it in gr]):
-    for feat in features:
+    for feat in features + map(lambda t: t[0], [it for gr in scan_features.itervalues() for it in gr]):
         print  "-- {}".format(feat)
 
         # Check for duplicates
@@ -92,7 +83,7 @@ def summary (data_, args, feature_dict, scan_features, target_tpr=0.5, num_boots
         pass
 
     # Perform plotting
-    c = plot(data, args, features, scan_features, points, jsd_limits, masscut, pt_range, appearances)
+    c = plot(data, args, features, scan_features, points, jsd_limits, masscut, pt_range)
 
     # Output
     if title is None:
@@ -110,7 +101,7 @@ def plot (*argv):
     """
 
     # Unpack arguments
-    data, args, features, scan_features, points, jsd_limits, masscut, pt_range, appearances = argv
+    data, args, features, scan_features, points, jsd_limits, masscut, pt_range = argv
 
     with TemporaryStyle() as style:
 
@@ -163,33 +154,28 @@ def plot (*argv):
         for is_simple in [True, False]:
 
             # Split the legend into simple- and MVA taggers
-	    indices = np.array([0]+appearances).cumsum()
-	    for i in range(len(indices)-1):
-                for ifeat, feat in filter(lambda t: is_simple == signal_low(t[1]), enumerate(features[indices[i]:indices[i+1]])):
+            for ifeat, feat in filter(lambda t: is_simple == signal_low(t[1]), enumerate(features)):
 
-                    # Coordinates, label
-                    idx = map(lambda t: t[2], points).index(feat)
-                    x, y, label = points[idx]
+                # Coordinates, label
+                idx = map(lambda t: t[2], points).index(feat)
+                x, y, label = points[idx]
 
-                    # Overwrite default name of parameter-scan classifier
-                    label = 'ANN'    if label.startswith('ANN') else label
-                    label = 'uBoost' if label.startswith('uBoost') else label
+                # Overwrite default name of parameter-scan classifier
+                label = 'ANN'    if label.startswith('ANN') else label
+                label = 'uBoost' if label.startswith('uBoost') else label
 
-                    # Style
-                    colour      = rp.colours[i % len(rp.colours)]
-		    if ifeat == 0:
-			markerstyle = 20
-		    else:
-	                markerstyle = 23 + ifeat
+                # Style
+                colour      = rp.colours[(ifeat // 2) % len(rp.colours)]
+                markerstyle = 20 + (ifeat % 2) * 4
 
-                    # Draw
-                    c.graph([y], bins=[x], markercolor=colour, markerstyle=markerstyle, label='#scale[%.1f]{%s}' % (scale, latex(label, ROOT=True)), option='P')
-                    pass
+                # Draw
+                c.graph([y], bins=[x], markercolor=colour, markerstyle=markerstyle, label='#scale[%.1f]{%s}' % (scale, latex(label, ROOT=True)), option='P')
+                pass
 
             # Draw class-specific legend
-            width = 0.2 # chagned from 0.15 to 0.2
+            width = 0.15
             c.legend(header=("Analytical:" if is_simple else "MVA:"),
-                     width=width, xmin=0.50 + (width + 0.06) * (is_simple), ymax=0.888)  #, ymax=0.827) #changed xmin from 0.60 to 0.50, with translation from 0.02 to 0.06
+                     width=width, xmin=0.60 + (width + 0.02) * (is_simple), ymax=0.888)  #, ymax=0.827)
             pass
 
         # Make legends transparent
@@ -197,15 +183,49 @@ def plot (*argv):
             leg.SetFillStyle(0)
             pass
 
-        # Connecting lines (simple)
-	indices = np.array([0]+appearances).cumsum()
-	for i in range(len(indices)-1):
-	    base_x, base_y, _ = points[indices[i]]
-	    for j in range(appearances[i])[1:]:
-		x1, y1, _ = points[indices[i]+j]
-		color = rp.colours[i % len(rp.colours)]
-		c.graph([base_y, y1], bins=[base_x, x1], linecolor=color, linestyle=2, option='L')
+        # Markers, parametrised decorrelation
+        for base_feat, group in scan_features.iteritems():
+
+            # Get index in list of features
+            ifeat = features.index(base_feat)
+
+            # Style
+            colour      = rp.colours[(ifeat // 2) % len(rp.colours)]
+            markerstyle = 24
+
+            for feat, label in group:
+                idx = map(lambda t: t[2], points).index(feat)
+                x, y, _ = points[idx]
+
+                # Draw
+                c.graph([y], bins=[x], markercolor=colour, markerstyle=markerstyle, option='P')
+                if base_feat == 'NN':
+                    c.latex("   " + label, x, y, textsize=11, align=12, textcolor=ROOT.kGray + 2)
+                else:
+                    c.latex(label + "   ", x, y, textsize=11, align=32, textcolor=ROOT.kGray + 2)
+                    pass
                 pass
+
+            # Connecting lines (scan)
+            feats = [base_feat] + map(lambda t: t[0], group)
+            for feat1, feat2 in zip(feats[:-1], feats[1:]):
+                idx1 = map(lambda t: t[2], points).index(feat1)
+                idx2 = map(lambda t: t[2], points).index(feat2)
+
+                x1, y1, _ = points[idx1]
+                x2, y2, _ = points[idx2]
+
+                c.graph([y1, y2], bins=[x1, x2], linecolor=colour, linestyle=2, option='L')
+                pass
+            pass
+
+        # Connecting lines (simple)
+        for i in range(3):
+            x1, y1, _ = points[2 * i + 0]
+            x2, y2, _ = points[2 * i + 1]
+            colour = rp.colours[i]
+            c.graph([y1, y2], bins=[x1, x2], linecolor=colour, linestyle=2, option='L')
+            pass
 
         # Decorations
         c.xlabel("Background rejection, 1 / #varepsilon_{bkg}^{rel} @ #varepsilon_{sig}^{rel} = 50%")
