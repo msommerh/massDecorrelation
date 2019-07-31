@@ -6,6 +6,7 @@ import h5py
 import argparse
 import itertools
 from glob import glob
+import pickle
 
 # Scientific import(s)
 import numpy as np
@@ -44,25 +45,27 @@ sig = ['/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/Bul
 bkg = [] #will be filled below
 collection = 'fjet'
 treename = 'AnalysisTree'
-bkg_weights = [] #will be filled below
 nleading = 1
+weight_var = 'weight_test'
 
 bg_bins = ['170to300', '300to470', '470to600', '600to800', '800to1000', '1000to1400', '1400to1800', '1800to2400', '2400to3200', '3200toInf']
 bg_cross_sections = {'170to300':117276 , '300to470':7823 , '470to600':648.2, '600to800':186.9, '800to1000':32.293, '1000to1400':9.4183, '1400to1800':0.84265, '1800to2400':0.114943, '2400to3200':0.00682981, '3200toInf':0.000165445}
-bg_genEvents = {'170to300': 14796774.0 ,'300to470': 22470404.0 ,'470to600': 3959992.1 ,'600to800': 13119540.0 ,'800to1000': 19504239.0 ,'1000to1400': 9846615.0 ,'1400to1800': 2849545.0 ,'1800to2400': 1982038.0 ,'2400to3200': 996130.0 ,'3200toInf': 391735.0}
+bg_genEvents_list = []
+
 for bin_ in bg_bins:
 	bkg.append("/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/QCD_Pt_{}.root".format(bin_))
-	bkg_weights.append(bg_cross_sections[bin_]/bg_genEvents[bin_])
+	bg_pickle = pickle.load(open( "/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/QCD_Pt_{}.pck".format(bin_), "rb" ))
+	bg_genEvents_list.append(bg_pickle['events'])
 
 
 # Utility function(s)
 glob_sort_list = lambda paths: sorted(list(itertools.chain.from_iterable(map(glob, paths))))
 
-branches_l1 = ['jj_l1_softDrop_mass', 'jj_l1_softDrop_pt', 'jj_l1_softDrop_eta', 'jj_l1_softDrop_phi', 'jj_l1_tau1', 'jj_l1_tau2', 'jj_l1_tau2/jj_l1_tau1','jj_l1_ecfN2_beta1', 'jj_l1_ecfN2_beta2','jj_l1_DeepBoosted_WvsQCD', 'jj_l1_MassDecorrelatedDeepBoosted_WvsQCD', 'nVert']
+branches_l1 = ['jj_l1_softDrop_mass', 'jj_l1_softDrop_pt', 'jj_l1_softDrop_eta', 'jj_l1_softDrop_phi', 'jj_l1_tau1', 'jj_l1_tau2', 'jj_l1_tau2/jj_l1_tau1','jj_l1_ecfN2_beta1', 'jj_l1_ecfN2_beta2','jj_l1_DeepBoosted_WvsQCD', 'jj_l1_MassDecorrelatedDeepBoosted_WvsQCD', 'nVert', 'genWeight*puWeight*xsec']
 selections_l1 = 'jj_l1_softDrop_mass>50 && jj_l1_softDrop_mass<300 && jj_l1_softDrop_pt>200 && jj_l1_softDrop_pt<2000 && TMath::Abs(jj_l1_softDrop_eta)<2.4'
-branches_l2 = ['jj_l2_softDrop_mass', 'jj_l2_softDrop_pt', 'jj_l2_softDrop_eta', 'jj_l2_softDrop_phi', 'jj_l2_tau1', 'jj_l2_tau2', 'jj_l2_tau2/jj_l2_tau1', 'jj_l2_ecfN2_beta1', 'jj_l2_ecfN2_beta2','jj_l2_DeepBoosted_WvsQCD', 'jj_l2_MassDecorrelatedDeepBoosted_WvsQCD', 'nVert']
+branches_l2 = ['jj_l2_softDrop_mass', 'jj_l2_softDrop_pt', 'jj_l2_softDrop_eta', 'jj_l2_softDrop_phi', 'jj_l2_tau1', 'jj_l2_tau2', 'jj_l2_tau2/jj_l2_tau1', 'jj_l2_ecfN2_beta1', 'jj_l2_ecfN2_beta2','jj_l2_DeepBoosted_WvsQCD', 'jj_l2_MassDecorrelatedDeepBoosted_WvsQCD', 'nVert', 'genWeight*puWeight*xsec']
 selections_l2 = 'jj_l2_softDrop_mass>50 && jj_l2_softDrop_mass<300 && jj_l2_softDrop_pt>200 && jj_l2_softDrop_pt<2000 && TMath::Abs(jj_l2_softDrop_eta)<2.4'
-branches_updated = ['m', 'pt', 'eta', 'phi', 'tau1', 'tau2', 'tau21', 'N2_B1', 'N2_B2','DeepWvsQCD', 'decDeepWvsQCD', 'npv']
+branches_updated = ['m', 'pt', 'eta', 'phi', 'tau1', 'tau2', 'tau21', 'N2_B1', 'N2_B2','DeepWvsQCD', 'decDeepWvsQCD', 'npv', weight_var]
 
 def unravel (data, nleading):
     """
@@ -138,24 +141,18 @@ def main ():
     print "Found {} signal and {} background files.".format(len(sig), len(bkg))
 
     # Read in data
-
-    weight_var = 'weight_test'
-    #weight_var = 'mcEventWeight'
-
     for n in range(len(sig)):
 	print "sig data loop, n =",n
 	data_sig_l1 = root_numpy.root2array(sig[n], treename=treename, branches=branches_l1, selection=selections_l1)
 	data_sig_l2 = root_numpy.root2array(sig[n], treename=treename, branches=branches_l2, selection=selections_l2)
 	data_sig_l1.dtype.names = branches_updated
 	data_sig_l2.dtype.names = branches_updated
-	#data_sig_l1 = rfn.append_fields(data_sig_l1, weight_var, np.full(data_sig_l1.shape[0], sig_weights[n]),   usemask=False) # uniform weights
-	#data_sig_l2 = rfn.append_fields(data_sig_l2, weight_var, np.full(data_sig_l2.shape[0], sig_weights[n]),   usemask=False)
 
-	sig_weights_l1 = reweight('prepro/weights/rescale.json', data_sig_l1['pt'], np.ones(len(data_sig_l1)), 25, scale_correction=1.3)
-	sig_weights_l2 = reweight('prepro/weights/rescale.json', data_sig_l2['pt'], np.ones(len(data_sig_l2)), 25, scale_correction=1.3)
+	sig_weights_l1 = reweight('prepro/weights/correct_weights.json', data_sig_l1['pt'], np.ones(len(data_sig_l1)), 25, scale_correction=1.)
+	sig_weights_l2 = reweight('prepro/weights/correct_weights.json', data_sig_l2['pt'], np.ones(len(data_sig_l2)), 25, scale_correction=1.)
 
-	data_sig_l1 = rfn.append_fields(data_sig_l1, weight_var, sig_weights_l1, usemask=False) #weights to look like signal
-        data_sig_l2 = rfn.append_fields(data_sig_l2, weight_var, sig_weights_l2, usemask=False)
+	data_sig_l1[weight_var] = sig_weights_l1
+        data_sig_l2[weight_var] = sig_weights_l2
 	
 	if n == 0:
 	    data_sig = np.concatenate((data_sig_l1, data_sig_l2))
@@ -168,27 +165,12 @@ def main ():
 	data_bkg_l2 = root_numpy.root2array(bkg[n], treename=treename, branches=branches_l2, selection=selections_l2)
 	data_bkg_l1.dtype.names = branches_updated
 	data_bkg_l2.dtype.names = branches_updated
-	data_bkg_l1 = rfn.append_fields(data_bkg_l1, weight_var, np.full(data_bkg_l1.shape[0], bkg_weights[n]),   usemask=False)
-	data_bkg_l2 = rfn.append_fields(data_bkg_l2, weight_var, np.full(data_bkg_l2.shape[0], bkg_weights[n]),   usemask=False)
+	data_bkg_l1[weight_var] = data_bkg_l1[weight_var]/bg_genEvents_list[n] 
+	data_bkg_l2[weight_var] = data_bkg_l2[weight_var]/bg_genEvents_list[n] 
 	if n == 0:
 	    data_bkg = np.concatenate((data_bkg_l1, data_bkg_l2))
 	else:
 	    data_bkg = np.concatenate((data_bkg, np.concatenate((data_bkg_l1, data_bkg_l2))))
-
-    # Read in data
-    #data_sig_l1 = root_numpy.root2array(sig, treename=treename, branches=branches_l1)
-    #data_sig_l1 = rfn.append_fields(data_sig_l1, 'mcEventWeight', np.full(data_sig_l1.shape[0], weight),   usemask=False)
-
-    #data_sig_l2 = root_numpy.root2array(sig, treename=treename, branches=branches_l2)
-    #data_sig_l2.dtype.names = branches_updated
-    #data_bkg_l1 = root_numpy.root2array(bkg, treename=treename, branches=branches_l1)
-    #data_bkg_l1.dtype.names = branches_updated
-    #data_bkg_l2 = root_numpy.root2array(bkg, treename=treename, branches=branches_l2)
-    #data_bkg_l2.dtype.names = branches_updated
-    #data_sig = np.concatenate((data_sig_l1, data_sig_l2))
-    #data_bkg = np.concatenate((data_bkg_l1, data_bkg_l2))
-    #data_sig.dtype.names = branches_updated
-    #data_bkg.dtype.names = branches_updated
 
     # (Opt.) Unravel non-flat data
     data_sig = unravel(data_sig, nleading)

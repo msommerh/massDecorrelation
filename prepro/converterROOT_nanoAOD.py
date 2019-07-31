@@ -118,15 +118,22 @@ def main ():
     # For reproducibility
     rng = np.random.RandomState(seed=args.seed)
 
-    # Get glob'ed list of files for each category
-    sig = glob_sort_list(args.sig)
-    bkg = glob_sort_list(args.bkg)
+    print "1) Found {} signal and {} background files.".format(len(args.sig), len(args.bkg))
 
-    print "Found {} signal and {} background files.".format(len(sig), len(bkg))
+    # Get glob'ed list of files for each category
+    #sig = glob_sort_list(args.sig)
+    #bkg = glob_sort_list(args.bkg)
+
+    sig = args.sig
+    bkg = args.bkg
+    print "2) Found {} signal and {} background files.".format(len(sig), len(bkg))
 
     # Read in data
-    data_sig = root_numpy.root2array(sig, treename=args.treename)
-    data_bkg = root_numpy.root2array(bkg, treename=args.treename)
+    branches = ['FatJet_mass', 'FatJet_msoftdrop', 'FatJet_pt', 'FatJet_eta','FatJet_tau2/FatJet_tau1', 'FatJet_n2b1', 'FatJet_deepTagMD_WvsQCD', 'FatJet_deepTag_WvsQCD']
+    selection = 'FatJet_mass>30 && FatJet_pt>200 && FatJet_eta<2.4'
+    data_sig = root_numpy.root2array(sig, treename=args.treename, branches=branches, selection=selection)
+    data_bkg = root_numpy.root2array(bkg, treename=args.treename, branches=branches, selection=selection)
+    data.dtype.names = ['m', 'msoftdrop', 'pt', 'eta','tau21', 'N2_B1', 'decDeepWvsQCD', 'DeepWvsQCD']
 
     # (Opt.) Unravel non-flat data
     data_sig = unravel(data_sig, args.nleading)
@@ -143,10 +150,10 @@ def main ():
     data.dtype.names = map(rename, data.dtype.names)
 
     # Variable names
-    var_m      = 'fjet_JetConstitScaleMomentum_m'
-    var_pt     = 'fjet_pt'
-    var_rho    = 'fjet_rho'    # New variable
-    var_rhoDDT = 'fjet_rhoDDT' # New variable
+    var_m      = 'm'
+    var_pt     = 'pt'
+    var_rho    = 'rho'    # New variable
+    var_rhoDDT = 'rhoDDT' # New variable
 
     # Object selection
     msk = (data[var_pt] > 10.) & (data[var_m] > 10.) # @TODO: Generalise?

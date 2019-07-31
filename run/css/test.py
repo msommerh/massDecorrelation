@@ -105,6 +105,7 @@ def plot_distributions (data, var, bins):
         # Decorations
         c.xlabel(latex(var, ROOT=True) + ", " + latex(var + 'CSS', ROOT=True))
         c.ylabel("Number of jets p.d.f.")
+	c.ylim(0, 5.2) #now optimized for N2, so probably need to adjust for other variables
         c.legend(xmin=0.45, ymax=0.76, width=0.25)
         c.text(["#sqrt{s} = 13 TeV,  Multijets",
                 "KDE smoothed"], qualifier=QUALIFIER, ATLAS=False)

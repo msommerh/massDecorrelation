@@ -90,21 +90,21 @@ def jsd (data_, args, feature_dict, pt_range, title=None):
             jsd[feat].append(JSD(p, f, base=2))
 
             # -- Decorations
-            c.xlabel("Large-#it{R} jet mass [GeV]")
-            c.ylabel("Fraction of jets")
-            c.legend()
-            c.logy()
-            c.text(TEXT + [
-                "{:s} {} {:.3f}".format(latex(feat, ROOT=True), '<' if signal_low(feat) else '>', cut),
-                "JSD = {:.4f}".format(jsd[feat][-1])] + \
-                (["p_{{T}} #in  [{:.0f}, {:.0f}] GeV".format(*pt_range)] if pt_range else []),
-                qualifier=QUALIFIER, ATLAS=False)
+            #c.xlabel("Large-#it{R} jet mass [GeV]")
+            #c.ylabel("Fraction of jets")
+            #c.legend()
+            #c.logy()
+            #c.text(TEXT + [
+            #    "{:s} {} {:.3f}".format(latex(feat, ROOT=True), '<' if signal_low(feat) else '>', cut),
+            #    "JSD = {:.4f}".format(jsd[feat][-1])] + \
+            #    (["p_{{T}} #in  [{:.0f}, {:.0f}] GeV".format(*pt_range)] if pt_range else []),
+            #    qualifier=QUALIFIER, ATLAS=False)
 
             # -- Save
-	    if title is None:
-                c.save('figures/temp_jsd_{:s}_{:.0f}{}.pdf'.format(feat, eff, '' if pt_range is None else '__pT{:.0f}_{:.0f}'.format(*pt_range)))
-	    else:
-                c.save('figures/'+title+'_temp_jsd_{:s}_{:.0f}{}.pdf'.format(feat, eff, '' if pt_range is None else '__pT{:.0f}_{:.0f}'.format(*pt_range)))
+	    #if title is None:
+            #    c.save('figures/temp_jsd_{:s}_{:.0f}{}.pdf'.format(feat, eff, '' if pt_range is None else '__pT{:.0f}_{:.0f}'.format(*pt_range)))
+	    #else:
+            #    c.save('figures/'+title+'_temp_jsd_{:s}_{:.0f}{}.pdf'.format(feat, eff, '' if pt_range is None else '__pT{:.0f}_{:.0f}'.format(*pt_range)))
 
             pass
         pass
@@ -152,28 +152,53 @@ def plot (*argv):
             ref.SetBinContent(i + 1, 1)
             pass
         c.hist(ref, linecolor=ROOT.kGray + 2, linewidth=1)
+	linestyles = [1, 3, 5, 7]
 
         width = 0.15
-        for is_simple in [True, False]:
+	if len(appearances) != 2:
+            for is_simple in [True, False]:
+    
+                indices = np.array([0]+appearances).cumsum()
+                for i in range(len(indices)-1):
+                    for ifeat, feat in enumerate(features[indices[i]:indices[i+1]]):
+                        if is_simple != signal_low(feat): continue
+                        colour = rp.colours[i % len(rp.colours)]
+                        linestyle   =  1 + ifeat
+                        if ifeat == 0:
+                            markerstyle = 20
+                        else:
+                            markerstyle = 23 + ifeat
+                        c.plot(jsd[feat], bins=np.array(effs) / 100., linecolor=colour, markercolor=colour, linestyle=linestyle, markerstyle=markerstyle, label=latex(feat, ROOT=True), option='PL')
+                        pass
+    
+                c.legend(header=("Analytical:" if is_simple else "MVA:"),
+                         width=width * (1 + 0.8 * int(is_simple)), xmin=0.42 + (width + 0.05) * (is_simple), ymax=0.888,
+                         columns=2 if is_simple else 1,
+                         margin=0.35)   # moved one intendation to the left
+	else:
+            for first_var in [True, False]:
+    
+                indices = np.array([0]+appearances).cumsum()
+                for i in [0,1]:
+                    if i==0 and not first_var: continue
+                    if i==1 and first_var: continue
+                    for ifeat, feat in enumerate(features[indices[i]:indices[i+1]]):
+                        colour = rp.colours[i % len(rp.colours)]
+                        linestyle   =  linestyles[ifeat]
+                        if ifeat == 0:
+                            markerstyle = 20
+                        else:
+                            markerstyle = 23 + ifeat
+                        c.plot(jsd[feat], bins=np.array(effs) / 100., linecolor=colour, markercolor=colour, linestyle=linestyle, markerstyle=markerstyle, label=latex(feat, ROOT=True), option='PL')
+                        pass
+    
+                c.legend(header=(latex(features[0], ROOT=True)+"-based:" if first_var else latex(features[appearances[1]], ROOT=True)+"-based:"),
+                         width=width, xmin=0.45 + (width + 0.06) * (first_var), ymax=0.888)
 
-	    indices = np.array([0]+appearances).cumsum()
-	    for i in range(len(indices)-1):
-                for ifeat, feat in enumerate(features[indices[i]:indices[i+1]]):
-                    if is_simple != signal_low(feat): continue
-                    colour = rp.colours[i % len(rp.colours)]
-                    linestyle   =  1 + ifeat
-		    if ifeat == 0:
-			markerstyle = 20
-		    else:
-                        markerstyle = 23 + ifeat
-                    c.plot(jsd[feat], bins=np.array(effs) / 100., linecolor=colour, markercolor=colour, linestyle=linestyle, markerstyle=markerstyle, label=latex(feat, ROOT=True), option='PL')
-                    pass
-
-            c.legend(header=("Analytical:" if is_simple else "MVA:"),
-                     width=width * (1 + 0.8 * int(is_simple)), xmin=0.42 + (width + 0.05) * (is_simple), ymax=0.888,
-                     columns=2 if is_simple else 1,
-                     margin=0.35)   # moved one intendation to the left
             pass
+
+####  c.legend(header=(features[0]+":" if first_var else features[appearances[1]]+":"), #work in progress!!!!!!!!!!!!!!!!!!!!!
+####                  width=width, xmin=0.45 + (width + 0.06) * (first_var), ymax=0.888)
 
         # Meaningful limits on JSD
         x,y,ey = map(np.array, zip(*jsd_limits))

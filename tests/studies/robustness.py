@@ -299,7 +299,7 @@ def plot_full (*argv):
 
             # -- x-axis label
             if   var == 'pt':
-                xlabel = "Large-#it{R} jet p_{T} [GeV]"
+                xlabel = "jet p_{T} [GeV]"
             elif var == 'npv':
                 xlabel = "Number of reconstructed vertices N_{PV}"
             else:
@@ -496,7 +496,7 @@ def plot_individual (*argv):
 
                 # -- x-axis label
                 if   var == 'pt':
-                    xlabel = "Large-#it{R} jet p_{T} [GeV]"
+                    xlabel = "jet p_{T} [GeV]"
                 elif var == 'npv':
                     xlabel = "Number of reconstructed vertices N_{PV}"
                 elif var is not None:
@@ -578,15 +578,21 @@ def plot_individual (*argv):
 
                 # Draw class-specific legend
                 width = 0.90 #margin_hori - 0.03
+                #if var is None:
+                #    if metric == 'rej':
+                #        c.legend(header='MVA:',        width=width, xmin=0.05, ymax=1. - margin_vert + 0.02)  # xmin = margin_hori + 0.03
+                #    else:
+                #        c.legend(header='Analytical:', width=width, xmin=0.05, ymax=1. - margin_vert + 0.02)
+                #        pass
+                #    c.pad()._legends[-1].SetTextSize(style.GetLegendTextSize())
+                #    pass
+                #pass
                 if var is None:
                     if metric == 'rej':
-                        c.legend(header='MVA:',        width=width, xmin=0.05, ymax=1. - margin_vert + 0.02)  # xmin = margin_hori + 0.03
-                    else:
-                        c.legend(header='Analytical:', width=width, xmin=0.05, ymax=1. - margin_vert + 0.02)
+                        c.legend(header='Legend:',        width=width, xmin=0.05, ymax=1. - margin_vert + 0.02)  # xmin = margin_hori + 0.03
                         pass
                     c.pad()._legends[-1].SetTextSize(style.GetLegendTextSize())
-                    pass
-                pass
+
             pass
 
             # Arrows
@@ -724,7 +730,7 @@ def plot (*argv):
 
         # -- x-axis label
         if var == 'pt':
-            xlabel = "Large-#it{R} jet p_{T} [GeV]"
+            xlabel = "jet p_{T} [GeV]"
         elif var == 'npv':
             xlabel = "Number of reconstructed vertices N_{PV}"
         else:

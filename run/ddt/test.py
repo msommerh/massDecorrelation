@@ -35,9 +35,9 @@ def main (args):
     # Load data
     data, _, _ = load_data(args.input + 'data.h5', test_full_signal=True)
 
-    #variable = VAR_TAU21
+    variable = VAR_TAU21
     #variable = VAR_N2
-    variable = VAR_DECDEEP
+    #variable = VAR_DECDEEP
     #variable = VAR_DEEP
 
     if variable == VAR_N2:
@@ -187,7 +187,7 @@ def plot1D (*argv):
     c.plot([y1,y2], bins=[x1,x2], color=rp.colours[-1], label='Linear fit', linewidth=1, linestyle=1, option='L')
 
     # Decorations
-    c.xlabel("Large-#it{R} jet #rho^{DDT} = log[m^{2} / (p_{T} #times 1 GeV)]")
+    c.xlabel("jet #rho^{DDT} = log[m^{2} / (p_{T} #times 1 GeV)]")
     if variable == VAR_TAU21:
         c.ylabel("#LT#tau_{21}#GT, #LT#tau_{21}^{DDT}#GT")
     elif variable == VAR_N2:
@@ -198,7 +198,7 @@ def plot1D (*argv):
 	c.ylabel("#LTdeepWvsQCD#GT, #LTdeepWvsQCD^{DDT}#GT")
 
     c.text(["#sqrt{s} = 13 TeV,  Multijets"], qualifier=QUALIFIER, ATLAS=False)
-    c.legend(width=0.25, xmin=0.57, ymax=None if "Internal" in QUALIFIER else 0.85)
+    c.legend(width=0.25, xmin=0.57, ymax=0.86) #None if "Internal" in QUALIFIER else 0.93)
 
     c.xlim(0, 6.0)
     if variable == VAR_N2:
@@ -207,9 +207,9 @@ def plot1D (*argv):
 	ymax = 1.4
     c.ylim(0, ymax)
     c.latex("Fit range", sum(fit_range) / 2., 0.08, textsize=13, textcolor=ROOT.kGray + 2)
-    c.latex("Fit parameters:", 0.3, 0.7*ymax, align=11, textsize=14, textcolor=ROOT.kBlack)
-    c.latex("   intercept = {:7.4f}".format(intercept[0]), 0.3, 0.65*ymax, align=11, textsize=14, textcolor=ROOT.kBlack)
-    c.latex("   coef = {:7.4f}".format(coef[0]), 0.3, 0.6*ymax, align=11, textsize=14, textcolor=ROOT.kBlack)
+    c.latex("Fit parameters:", 0.37, 0.7*ymax, align=11, textsize=14, textcolor=ROOT.kBlack)
+    c.latex("  intercept = {:7.4f}".format(intercept[0]), 0.37, 0.65*ymax, align=11, textsize=14, textcolor=ROOT.kBlack)
+    c.latex("  coef = {:7.4f}".format(coef[0]), 0.37, 0.6*ymax, align=11, textsize=14, textcolor=ROOT.kBlack)
     c.xline(fit_range[0], ymax=0.82, text_align='BR', linecolor=ROOT.kGray + 2)
     c.xline(fit_range[1], ymax=0.82, text_align='BL', linecolor=ROOT.kGray + 2)
 

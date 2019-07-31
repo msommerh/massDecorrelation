@@ -42,7 +42,7 @@ def main (args):
     args, cfg = initialise(args)
 
     # Load data
-    data, features, _ = load_data(args.input + 'data_singlejet.h5', test_full_signal=True)
+    data, features, _ = load_data(args.input + 'data.h5', test_full_signal=True)
     #data, features, _ = load_data(args.input + 'data.h5', train_full_signal=True)  #for faster checking, don't use for actual comparison
 
     # Common definitions
@@ -64,14 +64,14 @@ def main (args):
 
     #tagger_features = {'tau21':['','DDT'], 'N2_B1':['','kNN','CSS']}; title='ATLAS2'
     #tagger_features = {'tau21':['','DDT'], 'N2_B1':['','kNN',], 'decDeepWvsQCD':['','kNN'], 'DeepWvsQCD':['','kNN']}; title='Deep_vs_Analytic'
-    tagger_features = {'tau21':[''], 'N2_B1':[''], 'decDeepWvsQCD':[''], 'DeepWvsQCD':['']}; title='Deep_Check2'
+    #tagger_features = {'tau21':[''], 'N2_B1':[''], 'decDeepWvsQCD':[''], 'DeepWvsQCD':['']}; title='Deep_Check2'
+    #tagger_features = {'tau21':['', 'DDT', 'kNN', 'CSS'], 'N2_B1':['', 'DDT', 'kNN','CSS']}; title='Full_Analytic'
+    tagger_features = {'tau21':['', 'DDT', 'kNN', 'CSS'], 'N2_B1':['', 'DDT', 'kNN','CSS']}; title='Full_Analytic_vs_Atlas'
 
     extracted_features = []
     for basevar in tagger_features.keys():
         for suffix in tagger_features[basevar]:
             extracted_features.append(basevar+suffix)
-
-    print "1) extracted features =",extracted_features
 
     # Add variables
     # --------------------------------------------------------------------------
@@ -79,13 +79,13 @@ def main (args):
 
 	# the selections of which variables to add could also be automated from the tagger_features list...
 
-        ## Tau21DDT
-        #from run.ddt.common import add_ddt
-        #add_ddt(data, feat='tau21', path='models/ddt/ddt_tau21.pkl.gz') 
+        # Tau21DDT
+        from run.ddt.common import add_ddt
+        add_ddt(data, feat='tau21', path='models/ddt/ddt_tau21.pkl.gz') 
 
-        ## N2DDT
-        #from run.ddt.common import add_ddt
-        #add_ddt(data, feat='N2_B1', path='models/ddt/ddt_N2_B1.pkl.gz') 
+        # N2DDT
+        from run.ddt.common import add_ddt
+        add_ddt(data, feat='N2_B1', path='models/ddt/ddt_N2_B1.pkl.gz') 
 
 	## decDeepQvsQCDDDT
         #from run.ddt.common import add_ddt
@@ -95,15 +95,15 @@ def main (args):
         #from run.ddt.common import add_ddt
         #add_ddt(data, feat='DeepWvsQCD', path='models/ddt/ddt_DeepWvsQCD.pkl.gz') 
 
-        ## Tau21-kNN
-        #from run.knn.common import add_knn, VAR_TAU21 as kNN_basevar, TAU21_EFF as kNN_eff
-        #print "k-NN base variable: {} (cp. {})".format(kNN_basevar, 'tau_{21}-k#minusNN')
-        #add_knn(data, feat=kNN_basevar, path='models/knn/knn_{}_{}.pkl.gz'.format(kNN_basevar, kNN_eff))
+        # Tau21-kNN
+        from run.knn.common import add_knn, VAR_TAU21 as kNN_basevar, TAU21_EFF as kNN_eff
+        print "k-NN base variable: {} (cp. {})".format(kNN_basevar, 'tau_{21}-k#minusNN')
+        add_knn(data, feat=kNN_basevar, path='models/knn/knn_{}_{}.pkl.gz'.format(kNN_basevar, kNN_eff))
 
-        ## N2-kNN
-        #from run.knn.common import add_knn, VAR_N2 as kNN_basevar, N2_EFF as kNN_eff
-        #print "k-NN base variable: {} (cp. {})".format(kNN_basevar, 'N_{2}-kNN')
-        #add_knn(data, feat=kNN_basevar, path='models/knn/knn_{}_{}.pkl.gz'.format(kNN_basevar, kNN_eff))
+        # N2-kNN
+        from run.knn.common import add_knn, VAR_N2 as kNN_basevar, N2_EFF as kNN_eff
+        print "k-NN base variable: {} (cp. {})".format(kNN_basevar, 'N_{2}-kNN')
+        add_knn(data, feat=kNN_basevar, path='models/knn/knn_{}_{}.pkl.gz'.format(kNN_basevar, kNN_eff))
 
         ## decDeepWvsQCD-kNN
         #from run.knn.common import add_knn, VAR_DECDEEP as kNN_basevar, DECDEEP_EFF as kNN_eff
@@ -115,13 +115,13 @@ def main (args):
         #print "k-NN base variable: {} (cp. {})".format(kNN_basevar, 'DeepWvsQCD')
         #add_knn(data, feat=kNN_basevar, path='models/knn/knn_{}_{}.pkl.gz'.format(kNN_basevar, kNN_eff))
 
-        ## Tau21-CSS
-        #from run.css.common import add_css
-        #add_css("tau21", data)
+        # Tau21-CSS
+        from run.css.common import add_css
+        add_css("tau21", data)
 
-        ## N2-CSS
-        #from run.css.common import add_css
-        #add_css("N2_B1", data)
+        # N2-CSS
+        from run.css.common import add_css
+        add_css("N2_B1", data)
 
         ## decDeepWvsQCD-CSS
         #from run.css.common import add_css
@@ -140,11 +140,8 @@ def main (args):
     data.drop(columns=unused_variables)
     gc.collect()
 
-    print "2) extracted features =",extracted_features
     # Perform performance studies
-    #perform_studies (data, args, tagger_features, ann_vars, uboost_vars)
     perform_studies (data, args, tagger_features, extracted_features, title=title)
-    print "3) extracted features =",extracted_features
     return 0
 
 
@@ -155,7 +152,9 @@ def perform_studies (data, args, tagger_features, extracted_features, title=None
     """
     #masscuts  = [True, False]
     masscuts = [False]
-    pt_ranges = [None, (200, 500), (500, 1000), (1000, 2000)]
+    #pt_ranges = [None, (200, 500), (500, 1000), (1000, 2000)]
+    pt_ranges = [(200, 500), (500, 1000)]
+    #pt_ranges = [None]
 
 
     ## Perform combined robustness study    
@@ -172,20 +171,14 @@ def perform_studies (data, args, tagger_features, extracted_features, title=None
     #        studies.jetmasscomparison(data, args, tagger_features, pt_range, title=title)
     #    pass
 
-    ## Perform summary plot study  
-    #with Profile("Study: Summary plot"):
-    #    #regex_nn = re.compile('\#lambda=[\d\.]+')
-    #    #regex_ub = re.compile('\#alpha=[\d\.]+')
+    # Perform summary plot study  
+    with Profile("Study: Summary plot"):
+        scan_features = dict()
 
-    #    #scan_features = {'NN':       map(lambda feat: (feat, regex_nn.search(feat).group(0)), ann_vars),
-    #    #                 'Adaboost': map(lambda feat: (feat, regex_ub.search(feat).group(0)), uboost_vars)
-    #    #                 }
-    #    scan_features = dict()
-
-    #    for masscut, pt_range in itertools.product(masscuts, pt_ranges):
-    #        studies.summary(data, args, tagger_features, scan_features, masscut=masscut, pt_range=pt_range, title=title)
-    #        pass
-    #    pass
+        for masscut, pt_range in itertools.product(masscuts, pt_ranges):
+            studies.summary(data, args, tagger_features, scan_features, masscut=masscut, pt_range=pt_range, title=title)
+            pass
+        pass
 
     ## Perform distributions study
     #with Profile("Study: Substructure tagger distributions"):
@@ -197,14 +190,14 @@ def perform_studies (data, args, tagger_features, extracted_features, title=None
     #        pass
     #    pass
 
-    # Perform ROC study
-    with Profile("Study: ROC"):
-	masscuts = [(65,105)]
-	pt_ranges = [(None), (300,500), (1000,1500)]
-        for masscut, pt_range in itertools.product(masscuts, pt_ranges):
-            studies.roc(data, args, tagger_features, masscut=masscut, pt_range=pt_range, title=title)
-            pass
-        pass
+    ## Perform ROC study
+    #with Profile("Study: ROC"):
+    #    #masscuts = [(65,105)]
+    #    #pt_ranges = [(None), (300,500), (1000,1500)]
+    #    for masscut, pt_range in itertools.product(masscuts, pt_ranges):
+    #        studies.roc(data, args, tagger_features, masscut=masscut, pt_range=pt_range, title=title)
+    #        pass
+    #    pass
 
     ## Perform JSD study
     #with Profile("Study: JSD"):
@@ -220,7 +213,7 @@ def perform_studies (data, args, tagger_features, extracted_features, title=None
     #        studies.efficiency(data, args, feat, title=title)
     #        pass
 
-    #return
+    return
 
 # Main function call
 if __name__ == '__main__':

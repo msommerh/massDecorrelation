@@ -36,12 +36,12 @@ def main (args):
 
     #variable = VAR_TAU21; signal_above=False
     #bg_eff = TAU21_EFF
-    #variable = VAR_N2; signal_above=False
-    #bg_eff = N2_EFF
+    variable = VAR_N2; signal_above=False
+    bg_eff = N2_EFF
     #variable = VAR_DECDEEP; signal_above=True
     #bg_eff = DECDEEP_EFF
-    variable = VAR_DEEP; signal_above=True
-    bg_eff = DEEP_EFF
+    #variable = VAR_DEEP; signal_above=True
+    #bg_eff = DEEP_EFF
 
     ## training on a list of working points:
     #for bg_eff in WORKING_POINTS:

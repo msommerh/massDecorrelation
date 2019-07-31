@@ -16,7 +16,7 @@ def find_weight_function(title, Numerator_pT, Denominator_pT, binsize, Numerator
 		Numerator_hist = Numerator_pT.Clone()	
 		Denominator_hist = Denominator_pT.Clone()
 	else:
-		if Numerator_weights:
+		if Numerator_weights is not None:
 			fill_hist(Numerator_hist, Numerator_pT, weights=Numerator_weights)
 		else:
 			fill_hist(Numerator_hist, Numerator_pT)

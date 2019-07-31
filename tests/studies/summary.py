@@ -119,9 +119,13 @@ def plot (*argv):
         mult  = 10. if ranges == 2 else (5. if ranges == 1 else 1.)
         
         # Define variable(s)
+        #axisrangex = (1.4,     100.)
+	#axisrangey = (0.3, 100000. * mult)
+	#axisrangex = (1.4,     40.)
+        #axisrangey = (0.3, 300000. * mult)
         axisrangex = (1.4,     100.)
-        axisrangey = (0.3, 100000. * mult)
-        aminx, amaxx = axisrangex
+        axisrangey = (0.3, 500000.)
+	aminx, amaxx = axisrangex
         aminy, amaxy = axisrangey
 
         # Styling
@@ -160,37 +164,68 @@ def plot (*argv):
 
 
         # Markers
-        for is_simple in [True, False]:
+	if len(appearances) != 2:
+            for is_simple in [True, False]:
 
-            # Split the legend into simple- and MVA taggers
-	    indices = np.array([0]+appearances).cumsum()
-	    for i in range(len(indices)-1):
-                for ifeat, feat in filter(lambda t: is_simple == signal_low(t[1]), enumerate(features[indices[i]:indices[i+1]])):
+                # Split the legend into simple- and MVA taggers
+	        indices = np.array([0]+appearances).cumsum()
+	        for i in range(len(indices)-1):
+                    for ifeat, feat in filter(lambda t: is_simple == signal_low(t[1]), enumerate(features[indices[i]:indices[i+1]])):
 
-                    # Coordinates, label
-                    idx = map(lambda t: t[2], points).index(feat)
-                    x, y, label = points[idx]
+                        # Coordinates, label
+                        idx = map(lambda t: t[2], points).index(feat)
+                        x, y, label = points[idx]
 
-                    # Overwrite default name of parameter-scan classifier
-                    label = 'ANN'    if label.startswith('ANN') else label
-                    label = 'uBoost' if label.startswith('uBoost') else label
+                        # Overwrite default name of parameter-scan classifier
+                        label = 'ANN'    if label.startswith('ANN') else label
+                        label = 'uBoost' if label.startswith('uBoost') else label
 
-                    # Style
-                    colour      = rp.colours[i % len(rp.colours)]
-		    if ifeat == 0:
-			markerstyle = 20
-		    else:
-	                markerstyle = 23 + ifeat
+                        # Style
+                        colour      = rp.colours[i % len(rp.colours)]
+		        if ifeat == 0:
+			    markerstyle = 20
+		        else:
+	                    markerstyle = 23 + ifeat
 
-                    # Draw
-                    c.graph([y], bins=[x], markercolor=colour, markerstyle=markerstyle, label='#scale[%.1f]{%s}' % (scale, latex(label, ROOT=True)), option='P')
-                    pass
+                        # Draw
+                        c.graph([y], bins=[x], markercolor=colour, markerstyle=markerstyle, label='#scale[%.1f]{%s}' % (scale, latex(label, ROOT=True)), option='P')
+                        pass
 
-            # Draw class-specific legend
-            width = 0.2 # chagned from 0.15 to 0.2
-            c.legend(header=("Analytical:" if is_simple else "MVA:"),
+                # Draw class-specific legend
+                width = 0.2 # chagned from 0.15 to 0.2
+                c.legend(header=("Analytical:" if is_simple else "MVA:"),
                      width=width, xmin=0.50 + (width + 0.06) * (is_simple), ymax=0.888)  #, ymax=0.827) #changed xmin from 0.60 to 0.50, with translation from 0.02 to 0.06
             pass
+
+	else:
+            for first_var in [True, False]:
+
+                # Split the legend into simple- and MVA taggers
+	        indices = np.array([0]+appearances).cumsum()
+	        for i in [0,1]:
+		    if i == 0 and not first_var: continue
+		    if i == 1 and first_var: continue
+                    for ifeat, feat in enumerate(features[indices[i]:indices[i+1]]):
+
+                        # Coordinates, label
+                        idx = map(lambda t: t[2], points).index(feat)
+                        x, y, label = points[idx]
+
+                        # Style
+                        colour      = rp.colours[i % len(rp.colours)]
+		        if ifeat == 0:
+			    markerstyle = 20
+		        else:
+	                    markerstyle = 23 + ifeat
+
+                        # Draw
+                        c.graph([y], bins=[x], markercolor=colour, markerstyle=markerstyle, label='#scale[%.1f]{%s}' % (scale, latex(label, ROOT=True)), option='P')
+                        pass
+
+                # Draw class-specific legend
+                width = 0.15
+                c.legend(header=(latex(features[0], ROOT=True)+"-based:" if first_var else latex(features[appearances[1]], ROOT=True)+"-based:"),
+                     width=width, xmin=0.55 + (width + 0.06) * (first_var), ymax=0.9)
 
         # Make legends transparent
         for leg in c.pads()[0]._legends:

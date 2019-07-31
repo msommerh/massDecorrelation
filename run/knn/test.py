@@ -67,9 +67,9 @@ for bound in BOUNDS:
     pass
 
 #ZRANGE = (0., 0.8)  # for tau21
-#ZRANGE = (0., 0.5) # for N2
+ZRANGE = (0., 0.5) # for N2
 #ZRANGE = (0.12,0.3) # for N2 in comparison with CMS-EXO-17-001
-ZRANGE = (0., 1.) # for decDeepWvsQCD
+#ZRANGE = (0., 1.) # for decDeepWvsQCD
 #ZRANGE = (0., 1.) # for DeepWvsQCD
 
 
@@ -88,12 +88,12 @@ def main (args):
 
     #variable = VAR_TAU21; signal_above = False
     #bg_eff = TAU21_EFF
-    #variable = VAR_N2; signal_above = False
-    #bg_eff = N2_EFF
+    variable = VAR_N2; signal_above = False
+    bg_eff = N2_EFF
     #variable = VAR_DECDEEP; signal_above = True
     #bg_eff = DECDEEP_EFF
-    variable = VAR_DEEP; signal_above = True
-    bg_eff = DEEP_EFF
+    #variable = VAR_DEEP; signal_above = True
+    #bg_eff = DEEP_EFF
 
     # -------------------------------------------------------------------------
     ####
@@ -175,11 +175,6 @@ def main (args):
     # Plotting local selection efficiencies for D2-kNN < 0
     # -- Compute signal efficiency
     for sig, msk in zip([True, False], [msk_sig, msk_bkg]):
-	if sig:
-		print "working on signal"
-	else:
-		print "working on bg"
-
         if sig:
             rgbs = [
                 (247/255., 251/255., 255/255.),
@@ -251,16 +246,16 @@ def main (args):
 
                 # Set non-zero bin content
                 if np.sum(msk & msk_bin):
-	    	if signal_above:
-	    	    msk_pass = data[knnfeat] > 0 # ensure correct cut direction
-	    	else:
-	    	    msk_pass = data[knnfeat] < 0
-	            num_msk = msk * msk_bin * msk_pass
-                    num = data.loc[num_msk, 'weight_test'].values.sum()
-                    den = data.loc[msk & msk_bin,            'weight_test'].values.sum()
-                    eff = num/den
-                    profile.SetBinContent(i + 1, j + 1, eff)
-                    pass
+	    	    if signal_above:
+	    	        msk_pass = data[knnfeat] > 0 # ensure correct cut direction
+	    	    else:
+	    	        msk_pass = data[knnfeat] < 0
+	                num_msk = msk * msk_bin * msk_pass
+                        num = data.loc[num_msk, 'weight_test'].values.sum()
+                        den = data.loc[msk & msk_bin,            'weight_test'].values.sum()
+                        eff = num/den
+                        profile.SetBinContent(i + 1, j + 1, eff)
+                        pass
 
         c = rp.canvas(batch=True)
         pad = c.pads()[0]._bare()
@@ -270,8 +265,8 @@ def main (args):
         pad.SetTopMargin(0.10)
 
         # Styling
-        profile.GetXaxis().SetTitle("Large-#it{R} jet " + latex(VARX, ROOT=True) + " = log(m^{2}/p_{T}^{2})")
-        profile.GetYaxis().SetTitle("Large-#it{R} jet " + latex(VARY, ROOT=True) + " [GeV]")
+        profile.GetXaxis().SetTitle("jet " + latex(VARX, ROOT=True) + " = log(m^{2}/p_{T}^{2})")
+        profile.GetYaxis().SetTitle("jet " + latex(VARY, ROOT=True) + " [GeV]")
         profile.GetZaxis().SetTitle("Selection efficiency for %s^{(%s%%)}" % (latex(variable, ROOT=True), bg_eff))
 
         profile.GetYaxis().SetNdivisions(505)
@@ -334,8 +329,8 @@ def plot (profile, fit, variable, bg_eff):
     pad.SetTopMargin(0.10)
 
     # Styling
-    profile.GetXaxis().SetTitle("Large-#it{R} jet " + latex(VARX, ROOT=True) + " = log(m^{2}/p_{T}^{2})")
-    profile.GetYaxis().SetTitle("Large-#it{R} jet " + latex(VARY, ROOT=True) + " [GeV]")
+    profile.GetXaxis().SetTitle("jet " + latex(VARX, ROOT=True) + " = log(m^{2}/p_{T}^{2})")
+    profile.GetYaxis().SetTitle("jet " + latex(VARY, ROOT=True) + " [GeV]")
     profile.GetZaxis().SetTitle("%s %s^{(%s%%)}" % ("#it{k}-NN fitted" if fit else "Measured", latex(variable, ROOT=True), bg_eff))
 
     profile.GetYaxis().SetNdivisions(505)
