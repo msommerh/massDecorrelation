@@ -34,10 +34,10 @@ def main (args):
     #data, _, _ = load_data(args.input + 'data.h5', train=True)
     data, _, _ = load_data(args.input + 'data.h5', train_full_signal=True)
 
-    #variable = VAR_TAU21; signal_above=False
-    #bg_eff = TAU21_EFF
-    variable = VAR_N2; signal_above=False
-    bg_eff = N2_EFF
+    variable = VAR_TAU21; signal_above=False
+    bg_eff = TAU21_EFF
+    #variable = VAR_N2; signal_above=False
+    #bg_eff = N2_EFF
     #variable = VAR_DECDEEP; signal_above=True
     #bg_eff = DECDEEP_EFF
     #variable = VAR_DEEP; signal_above=True

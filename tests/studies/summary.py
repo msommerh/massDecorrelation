@@ -121,10 +121,10 @@ def plot (*argv):
         # Define variable(s)
         #axisrangex = (1.4,     100.)
 	#axisrangey = (0.3, 100000. * mult)
-	#axisrangex = (1.4,     40.)
-        #axisrangey = (0.3, 300000. * mult)
-        axisrangex = (1.4,     100.)
-        axisrangey = (0.3, 500000.)
+	axisrangex = (1.4,     40.)
+        axisrangey = (0.3, 300000. * mult)
+        #axisrangex = (1.4,     100.)
+        #axisrangey = (0.3, 500000.)
 	aminx, amaxx = axisrangex
         aminy, amaxy = axisrangey
 

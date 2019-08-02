@@ -65,8 +65,8 @@ def main (args):
     #tagger_features = {'tau21':['','DDT'], 'N2_B1':['','kNN','CSS']}; title='ATLAS2'
     #tagger_features = {'tau21':['','DDT'], 'N2_B1':['','kNN',], 'decDeepWvsQCD':['','kNN'], 'DeepWvsQCD':['','kNN']}; title='Deep_vs_Analytic'
     #tagger_features = {'tau21':[''], 'N2_B1':[''], 'decDeepWvsQCD':[''], 'DeepWvsQCD':['']}; title='Deep_Check2'
-    #tagger_features = {'tau21':['', 'DDT', 'kNN', 'CSS'], 'N2_B1':['', 'DDT', 'kNN','CSS']}; title='Full_Analytic'
-    tagger_features = {'tau21':['', 'DDT', 'kNN', 'CSS'], 'N2_B1':['', 'DDT', 'kNN','CSS']}; title='Full_Analytic_vs_Atlas'
+    tagger_features = {'tau21':['', 'DDT', 'kNN', 'CSS'], 'N2_B1':['', 'DDT', 'kNN','CSS']}; title='Corrected_Full_Analytic'
+    #tagger_features = {'tau21':['', 'DDT', 'kNN', 'CSS'], 'N2_B1':['', 'DDT', 'kNN','CSS']}; title='Full_Analytic_vs_Atlas'
 
     extracted_features = []
     for basevar in tagger_features.keys():
@@ -134,8 +134,8 @@ def main (args):
         pass
 
     # Remove unused variables
-    #used_variables = set(tagger_features + ['m', 'pt', 'weight_test', 'npv']) ## need to put 'npv' back in for robustness study
-    used_variables = set(extracted_features + ['m', 'pt', 'weight_test', 'npv']) ## need to put 'npv' back in for robustness study
+    #used_variables = set(tagger_features + ['m', 'pt', 'weight_test', 'npv'])
+    used_variables = set(extracted_features + ['m', 'pt', 'weight_test', 'npv'])
     unused_variables = [var for var in list(data) if var not in used_variables]
     data.drop(columns=unused_variables)
     gc.collect()
@@ -152,8 +152,8 @@ def perform_studies (data, args, tagger_features, extracted_features, title=None
     """
     #masscuts  = [True, False]
     masscuts = [False]
-    #pt_ranges = [None, (200, 500), (500, 1000), (1000, 2000)]
-    pt_ranges = [(200, 500), (500, 1000)]
+    pt_ranges = [None, (200, 500), (500, 1000), (1000, 2000)]
+    #pt_ranges = [(1000, 2000)] 
     #pt_ranges = [None]
 
 

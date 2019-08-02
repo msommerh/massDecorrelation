@@ -35,8 +35,8 @@ def main (args):
     # Load data
     data, _, _ = load_data(args.input + 'data.h5', test_full_signal=True)
 
-    variable = VAR_TAU21
-    #variable = VAR_N2
+    #variable = VAR_TAU21
+    variable = VAR_N2
     #variable = VAR_DECDEEP
     #variable = VAR_DEEP
 

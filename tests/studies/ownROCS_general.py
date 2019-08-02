@@ -187,22 +187,19 @@ def GetData_corrected():
 
 	branches_l1 = ['jj_l1_softDrop_mass', 'jj_l1_softDrop_pt','jj_l1_tau2/jj_l1_tau1','jj_l1_ecfN2_beta1','jj_l1_DeepBoosted_WvsQCD', 'jj_l1_MassDecorrelatedDeepBoosted_WvsQCD', 'nVert', 'genWeight*puWeight*xsec']
 	selections_l1 = 'jj_l1_softDrop_mass>50 && jj_l1_softDrop_mass<300 && jj_l1_softDrop_pt>200 && jj_l1_softDrop_pt<2000 && TMath::Abs(jj_l1_softDrop_eta)<2.4'
-	#selections_l1 = 'jj_l1_softDrop_pt>200 && jj_l1_softDrop_pt<2000 && TMath::Abs(jj_l1_softDrop_eta)<2.4'
 	branches_l2 = ['jj_l2_softDrop_mass', 'jj_l2_softDrop_pt','jj_l2_tau2/jj_l2_tau1','jj_l2_ecfN2_beta1','jj_l2_DeepBoosted_WvsQCD', 'jj_l2_MassDecorrelatedDeepBoosted_WvsQCD', 'nVert', 'genWeight*puWeight*xsec']
 	selections_l2 = 'jj_l2_softDrop_mass>50 && jj_l2_softDrop_mass<300 && jj_l2_softDrop_pt>200 && jj_l2_softDrop_pt<2000 && TMath::Abs(jj_l2_softDrop_eta)<2.4'
-	#selections_l2 = 'jj_l2_softDrop_pt>200 && jj_l2_softDrop_pt<2000 && TMath::Abs(jj_l2_softDrop_eta)<2.4'
 	branches_updated = ['m', 'pt', 'tau21', 'N2_B1', 'DeepWvsQCD', 'decDeepWvsQCD', 'npv', weight_var]
-
 
     	for n in range(len(sig)):
         	print "sig data loop, n =",n
-        	data_sig_l1 = root_numpy.root2array(sig[n], treename=treename, branches=branches_l1, selection=selections_l1)
-        	data_sig_l2 = root_numpy.root2array(sig[n], treename=treename, branches=branches_l2, selection=selections_l2)
+        	data_sig_l1 = root_numpy.root2array(sig[n], treename=treename, branches=branches_l1, selection=selections_l1)#+' && TMath::Sqrt(TMath::Sq(jj_l1_eta-jj_l1_gen_eta)+TMath::Sq(jj_l1_phi-jj_l1_gen_phi))<0.6')
+        	data_sig_l2 = root_numpy.root2array(sig[n], treename=treename, branches=branches_l2, selection=selections_l2)#+' && TMath::Sqrt(TMath::Sq(jj_l2_eta-jj_l2_gen_eta)+TMath::Sq(jj_l2_phi-jj_l2_gen_phi))<0.6')
         	data_sig_l1.dtype.names = branches_updated
         	data_sig_l2.dtype.names = branches_updated
 
-        	sig_weights_l1 = reweight('prepro/weights/test_weights.json', data_sig_l1['pt'], np.ones(len(data_sig_l1)), 25, scale_correction=1.)
-        	sig_weights_l2 = reweight('prepro/weights/test_weights.json', data_sig_l2['pt'], np.ones(len(data_sig_l2)), 25, scale_correction=1.)
+        	sig_weights_l1 = reweight('prepro/weights/correct_weights.json', data_sig_l1['pt'], np.ones(len(data_sig_l1)), 25, scale_correction=1.)
+        	sig_weights_l2 = reweight('prepro/weights/correct_weights.json', data_sig_l2['pt'], np.ones(len(data_sig_l2)), 25, scale_correction=1.)
 
 		data_sig_l1[weight_var] = sig_weights_l1
 		data_sig_l2[weight_var] = sig_weights_l2
@@ -218,8 +215,8 @@ def GetData_corrected():
         	data_bkg_l2 = root_numpy.root2array(bkg[n], treename=treename, branches=branches_l2, selection=selections_l2)
         	data_bkg_l1.dtype.names = branches_updated
         	data_bkg_l2.dtype.names = branches_updated
-		data_bkg_l1[weight_var] = data_bkg_l1[weight_var]/bg_genEvents_list[n]
-		data_bkg_l2[weight_var] = data_bkg_l2[weight_var]/bg_genEvents_list[n]
+		data_bkg_l1[weight_var] = data_bkg_l1[weight_var]/float(bg_genEvents_list[n])
+		data_bkg_l2[weight_var] = data_bkg_l2[weight_var]/float(bg_genEvents_list[n])
         	if n == 0:
             		data_bkg = np.concatenate((data_bkg_l1, data_bkg_l2))
         	else:
@@ -230,6 +227,39 @@ def GetData_corrected():
 
 	data = np.concatenate((data_sig, data_bkg))
 	return data
+
+def GetSignal(selection=True, matching=True):
+	sig = ['/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_1000.root', '/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_3000.root','/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_1200.root', '/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_3500.root','/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_1400.root', '/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_4000.root','/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_1600.root', '/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_4500.root','/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_1800.root', '/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_500.root','/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_2000.root', '/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_600.root','/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_2500.root', '/eos/cms/store/cmst3/group/exovv/VVtuple/FullRun2VVVHNtuple/2016_new/BulkGravToWW_narrow_800.root']
+	treename = 'AnalysisTree'
+	weight_var = 'weight_test'
+
+	branches_l1 = ['jj_l1_softDrop_mass', 'jj_l1_softDrop_pt','jj_l1_tau2/jj_l1_tau1','jj_l1_ecfN2_beta1','jj_l1_DeepBoosted_WvsQCD', 'jj_l1_MassDecorrelatedDeepBoosted_WvsQCD', 'nVert', 'TMath::Sqrt(TMath::Sq(jj_l1_eta-jj_l1_gen_eta)+TMath::Sq(jj_l1_phi-jj_l1_gen_phi))', 'nVert/nVert']
+	branches_l2 = ['jj_l2_softDrop_mass', 'jj_l2_softDrop_pt','jj_l2_tau2/jj_l2_tau1','jj_l2_ecfN2_beta1','jj_l2_DeepBoosted_WvsQCD', 'jj_l2_MassDecorrelatedDeepBoosted_WvsQCD', 'nVert', 'TMath::Sqrt(TMath::Sq(jj_l2_eta-jj_l2_gen_eta)+TMath::Sq(jj_l2_phi-jj_l2_gen_phi))', 'nVert/nVert']
+	if selection:
+		selections_l1 = 'jj_l1_softDrop_mass>50 && jj_l1_softDrop_mass<300 && jj_l1_softDrop_pt>200 && jj_l1_softDrop_pt<2000 && TMath::Abs(jj_l1_softDrop_eta)<2.4'
+		selections_l2 = 'jj_l2_softDrop_mass>50 && jj_l2_softDrop_mass<300 && jj_l2_softDrop_pt>200 && jj_l2_softDrop_pt<2000 && TMath::Abs(jj_l2_softDrop_eta)<2.4'
+	else:
+		selections_l1 = 'jj_l1_softDrop_pt>200' 
+	        selections_l2 = 'jj_l2_softDrop_pt>200'
+	branches_updated = ['m', 'pt', 'tau21', 'N2_B1', 'DeepWvsQCD', 'decDeepWvsQCD', 'npv', 'truth_dR', weight_var]
+
+    	for n in range(len(sig)):
+        	print "sig data loop, n =",n
+		if matching:
+			selections_l1 += ' && TMath::Sqrt(TMath::Sq(jj_l1_eta-jj_l1_gen_eta)+TMath::Sq(jj_l1_phi-jj_l1_gen_phi))<0.6'
+			selections_l2 += ' && TMath::Sqrt(TMath::Sq(jj_l2_eta-jj_l2_gen_eta)+TMath::Sq(jj_l2_phi-jj_l2_gen_phi))<0.6'
+        	data_sig_l1 = root_numpy.root2array(sig[n], treename=treename, branches=branches_l1, selection=selections_l1)
+        	data_sig_l2 = root_numpy.root2array(sig[n], treename=treename, branches=branches_l2, selection=selections_l2)
+        	data_sig_l1.dtype.names = branches_updated
+        	data_sig_l2.dtype.names = branches_updated
+
+        	if n == 0:
+        	    	data_sig = np.concatenate((data_sig_l1, data_sig_l2))
+        	else:
+        	    	data_sig = np.concatenate((data_sig, np.concatenate((data_sig_l1, data_sig_l2))))
+
+	data_sig = rfn.append_fields(data_sig, "signal", np.ones ((data_sig.shape[0],)), usemask=False)
+	return data_sig
 
 
 def GetSimpleData():
@@ -411,7 +441,7 @@ if __name__ == "__main__":
 	global_masscut = (55,215)
 	pt_cut = (300,500)
 	#pt_cut = (200,2000)
-	title = "Deep_Check_reweighted_num_masscut"
+	title = "Deep_Check_matching"
 
 	#data = GetData()
 	#data = GetSimpleData()
@@ -419,10 +449,10 @@ if __name__ == "__main__":
 	#data = GetZZData()
 	data = GetData_corrected()
 
-	#import pandas as pd
+	import pandas as pd
 	#print "loading data"
 	#data = pd.read_hdf('input/data.h5', 'dataset')
-	#data = pd.read_hdf('/afs/cern.ch/work/m/msommerh/private/kNN_fitter/converter/small_nanoAOD.h5', 'dataset')
+	#data = pd.read_hdf('/afs/cern.ch/work/m/msommerh/private/kNN_fitter/converter/larger_nanoAOD.h5', 'dataset')
 	#print "skimming to test data"
 	#data = data[(data['signal'] == 1) | ((data['train'] == 0) & (data['signal'] == 0))]
 	

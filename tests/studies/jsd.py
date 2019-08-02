@@ -220,7 +220,8 @@ def plot (*argv):
 
         c.latex("Maximal sculpting", 0.065, 1.2, align=11, textsize=11, textcolor=ROOT.kGray + 2)
         c.xlim(0, 1)
-        c.ymin(5E-05)
+        #c.ymin(5E-05)
+	c.ymin(1E-06)  #chosen for highest pT bin
         c.padding(0.45)
         c.logy()
 

@@ -33,9 +33,9 @@ def main (args):
     data, features, _ = load_data(args.input + 'data.h5', train=True, background=True)
 
     #variable = VAR_TAU21
-    #variable = VAR_N2
+    variable = VAR_N2
     #variable = VAR_DECDEEP
-    variable = VAR_DEEP
+    #variable = VAR_DEEP
 
     # Fill variable profile
     profile = fill_profile(data, variable)

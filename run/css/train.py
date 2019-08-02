@@ -42,10 +42,10 @@ def main (args):
     data, features, _ = load_data(args.input + 'data.h5', background=True, train=True)
 
     # Fill substructure profile
-    #perform_optimisation("tau21", TAU21BINS, data)
-    #perform_optimisation("N2_B1", N2BINS, data)
-    perform_optimisation("decDeepWvsQCD", DECDEEPBINS, data)
-    perform_optimisation("DeepWvsQCD", DEEPBINS, data)
+    perform_optimisation("tau21", TAU21BINS, data)
+    perform_optimisation("N2_B1", N2BINS, data)
+    #perform_optimisation("decDeepWvsQCD", DECDEEPBINS, data)
+    #perform_optimisation("DeepWvsQCD", DEEPBINS, data)
     return
 
 

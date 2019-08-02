@@ -36,10 +36,10 @@ def main (args):
     # Load data
     data, features, _ = load_data(args.input + 'data.h5', train=True, background=True)
 
-    variable = "tau21"
-    bins = TAU21BINS
-    #variable = "N2_B1"
-    #bins = N2BINS
+    #variable = "tau21"
+    #bins = TAU21BINS
+    variable = "N2_B1"
+    bins = N2BINS
     #variable = "decDeepWvsQCD"
     #bins = DECDEEPBINS
     #variable = "DeepWvsQCD"
